@@ -2,11 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPO Glossary</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+	<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -16,7 +14,7 @@
             --primary-bg: #f4f4f9;
             --card-bg: #ffffff;
             --border-color: #eee;
-            --accent-green: #28a745;
+            --accent-blue: #0066cc;
         }
 
         body {
@@ -36,60 +34,119 @@
             max-width: 1200px;
             margin-left: auto;
             margin-right: auto;
-            display: block; /* Explicitly visible */
         }
 
-        #search-interface { display: none; min-height: 0; } /* Fixed min-height for iOS */
+        /* Ensure upload section is visible initially */
+        #csv-upload-section { display: block; }
+        #search-interface { display: none; min-height: 100vh; }
+
+        h1, h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
 
         .header-with-logo {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
             margin-bottom: 20px;
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
         }
 
+        .header-left { display: flex; align-items: center; gap: 12px; }
         .logo-img { height: 45px; width: auto; border-radius: 4px; }
+        .header-left h2 { border: none; margin: 0; font-size: 1.5rem; }
 
-        /* The Download Button - Fixed for iPad Standalone Mode */
-        .download-btn { 
-            -webkit-appearance: none; /* Critical for iOS */
-            background-color: var(--accent-green) !important; 
-            color: white !important; 
-            border: none; 
-            font-weight: bold; 
-            margin: 15px 0; 
-            width: 100%; 
-            height: 50px;
+        #filter-controls {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px; 
-            cursor: pointer;
-            font-size: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .btn-ui, input[type="search"] {
+        @media (min-width: 768px) {
+            #filter-controls { flex-direction: row; align-items: flex-start; gap: 30px; }
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
+        .control-group label { font-weight: bold; font-size: 0.95em; }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="search"], #category-dropdown-btn, #reset-categories-btn, #clear-search-btn {
             height: 44px;
             padding: 0 12px;
             border: 1px solid #ccc;
             border-radius: 6px;
             font-size: 16px;
             background-color: #fff;
+            box-sizing: border-box;
         }
 
-        /* Fixed Mobile Card View Logic */
+        input[type="search"] { flex-grow: 1; }
+        #clear-search-btn, #reset-categories-btn { cursor: pointer; white-space: nowrap; }
+
+        .category-buttons { display: flex; gap: 10px; }
+        .category-filter-container { position: relative; flex-grow: 1; }
+
+        #category-options {
+            position: absolute;
+            top: 48px;
+            left: 0;
+            background: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            max-height: 300px;
+            width: 100%;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .category-option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            gap: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .list-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .list-table th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; white-space: nowrap; }
+        .sort-info { font-size: 0.7em; color: #888; display: block; }
+
         @media screen and (max-width: 768px) {
             .list-table thead { display: none; }
-            .list-table tr { display: block; border: 1px solid #ddd; margin-bottom: 15px; border-radius: 8px; padding: 10px; background: #fff; }
-            .list-table td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-            .list-table td::before { content: attr(data-label); font-weight: bold; color: #666; }
-            .list-table td.definition.empty-data { display: none !important; }
+            .list-table tr { 
+                display: block; 
+                border: 1px solid #ddd; 
+                margin-bottom: 15px; 
+                border-radius: 8px; 
+                padding: 10px;
+                background: #fff;
+            }
+            .list-table td { 
+                display: flex; 
+                justify-content: space-between; 
+                padding: 8px 0; 
+                border-bottom: 1px solid #eee;
+                font-size: 14px;
+            }
+            .list-table td:last-child { border-bottom: none; }
+            .list-table td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                color: #666;
+                margin-right: 10px;
+                min-width: 80px;
+            }
         }
 
-        .hidden-col { display: none !important; }
+        .list-table td { padding: 12px; vertical-align: top; }
     </style>
 </head>
 <body>
@@ -104,27 +161,44 @@
         <div class="header-with-logo">
             <div class="header-left">
                 <img src="logo.jpg" alt="Logo" class="logo-img">
-                <h2 style="margin:0; display:inline; vertical-align:middle; margin-left:10px;">EPO Glossary</h2>
+                <h2>Search</h2>
             </div>
-            <button class="btn-ui" onclick="location.reload()">↻ Load New</button>
+            <a href="javascript:void(0)" class="load-new-link" onclick="location.reload();">
+                ↑ Load new glossary
+            </a>
         </div>
 
-        <button id="download-csv-btn" class="download-btn">📥 Download Filtered Results (CSV)</button>
+        <div id="filter-controls">
+            <div class="control-group">
+                <label for="search-input">Search:</label>
+                <div class="search-container">
+                    <input type="search" id="search-input" class="search" placeholder="Type to search...">
+                    <button id="clear-search-btn">Clear</button>
+                </div>
+            </div>
 
-        <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-            <input type="search" id="search-input" placeholder="Search..." style="flex-grow:1;">
-            <button id="clear-search-btn" class="btn-ui">Clear</button>
+            <div class="control-group">
+                <label>Category:</label>
+                <div class="category-buttons">
+                    <div class="category-filter-container">
+                        <button id="category-dropdown-btn" style="width: 100%;">Click to select...</button>
+                        <div id="category-options"></div>
+                    </div>
+                    <button id="reset-categories-btn">Reset</button>
+                </div>
+            </div>
         </div>
-
+        
         <div id="my-list">
-            <table class="list-table" style="width:100%;">
+            <table class="list-table">
                 <thead>
                     <tr>
-                        <th class="sort col-en" data-sort="en">EN</th>
-                        <th class="sort col-de" data-sort="de">DE</th>
-                        <th class="sort col-fr" data-sort="fr">FR</th>
-                        <th class="sort col-definition" data-sort="definition">Definition</th>
-                        <th class="sort col-category" data-sort="category">Category</th>
+                        <th class="sort" data-sort="en">EN <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="de">DE <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="fr">FR <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="nl">NL <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="definition">Definition <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="category">Category <span class="sort-info">↕ Sort A-Z</span></th>
                     </tr>
                 </thead>
                 <tbody class="list"></tbody>
@@ -137,6 +211,8 @@
         const uploadSection = document.getElementById('csv-upload-section');
         const searchInterface = document.getElementById('search-interface');
         const searchInput = document.getElementById('search-input');
+        const clearBtn = document.getElementById('clear-search-btn');
+        const categoryOptions = document.getElementById('category-options');
         let myList;
 
         fileInput.addEventListener('change', (e) => {
@@ -146,61 +222,132 @@
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
-                encoding: "UTF-8", // Fix for "é" and special characters
-                complete: (results) => {
+                encoding: "windows-1252",
+                complete: function(results) {
                     processData(results.data);
                 }
             });
         });
 
-        function processData(data) {
-            const filteredData = data.filter(i => i.EN || i.en);
-            
-            myList = new List('my-list', {
-                valueNames: ['en', 'de', 'fr', 'definition', 'category'],
-                item: `<tr>
-                    <td class="en col-en" data-label="EN"></td>
-                    <td class="de col-de" data-label="DE"></td>
-                    <td class="fr col-fr" data-label="FR"></td>
-                    <td class="definition col-definition" data-label="Definition"></td>
-                    <td class="category col-category" data-label="Category"></td>
-                </tr>`
-            }, filteredData);
-
-            // Hide Definition if empty in Mobile Card View
-            myList.on('updated', () => {
-                document.querySelectorAll('.list tr').forEach(row => {
-                    const defCell = row.querySelector('.definition');
-                    if (defCell && (!defCell.textContent || defCell.textContent.trim() === "")) {
-                        defCell.classList.add('empty-data');
-                    } else {
-                        defCell.classList.remove('empty-data');
-                    }
-                });
-            });
-
-            uploadSection.style.display = 'none';
-            searchInterface.style.display = 'block';
+        function cleanCategory(str) {
+            if (!str) return [];
+            return String(str).replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).filter(s => s !== "");
         }
 
-        // Search logic
-        searchInput.addEventListener('input', () => myList.search(searchInput.value));
-        document.getElementById('clear-search-btn').onclick = () => {
+        function processData(rawData) {
+            const data = rawData.map(item => {
+                const newItem = {};
+                for (let key in item) {
+                    const k = key.trim().toLowerCase();
+                    if (['en', 'de', 'fr', 'nl', 'definition', 'category'].includes(k)) {
+                        newItem[k] = (k === 'category') ? cleanCategory(item[key]).join(', ') : item[key];
+                    }
+                }
+                return newItem;
+            }).filter(i => i.en);
+
+            if (data.length > 0) {
+                renderList(data);
+                renderCategories(data);
+                
+                // Switch views
+                uploadSection.style.display = 'none';
+                searchInterface.style.display = 'block';
+                
+                setTimeout(() => {
+                    searchInterface.scrollIntoView({ behavior: 'smooth' });
+                    searchInput.focus();
+                }, 200);
+            }
+        }
+
+        function renderList(data) {
+            if (myList) myList.destroy();
+            const listBody = document.querySelector('.list');
+            listBody.innerHTML = '';
+
+            myList = new List('my-list', {
+                valueNames: ['en', 'de', 'fr', 'nl', 'definition', 'category'],
+                item: `<tr>
+                    <td class="en" data-label="EN"></td>
+                    <td class="de" data-label="DE"></td>
+                    <td class="fr" data-label="FR"></td>
+                    <td class="nl" data-label="NL"></td>
+                    <td class="definition" data-label="Definition"></td>
+                    <td class="category" data-label="Category"></td>
+                </tr>`,
+                sortFunction: (a, b, opt) => {
+                    return String(a.values()[opt.valueName]).localeCompare(String(b.values()[opt.valueName]), undefined, { sensitivity: 'base', numeric: true });
+                }
+            }, data);
+
+            document.querySelectorAll('th.sort').forEach(th => {
+                th.addEventListener('click', () => {
+                    document.querySelectorAll('.sort-info').forEach(s => s.textContent = '↕ Sort A-Z');
+                    th.querySelector('.sort-info').textContent = th.classList.contains('asc') ? '↕ Sort Z-A' : '↕ Sort A-Z';
+                });
+            });
+        }
+
+        function renderCategories(data) {
+            categoryOptions.innerHTML = '';
+            let cats = new Set();
+            data.forEach(i => cleanCategory(i.category).forEach(c => cats.add(c)));
+            
+            [...cats].sort().forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'category-option';
+                div.innerHTML = `<input type="checkbox" value="${cat}" id="c-${cat}"><label for="c-${cat}">${cat}</label>`;
+                div.onclick = (e) => {
+                    if(e.target.tagName !== 'INPUT') {
+                        const cb = div.querySelector('input');
+                        cb.checked = !cb.checked;
+                    }
+                    applyFilter();
+                };
+                categoryOptions.appendChild(div);
+            });
+        }
+
+        function applyFilter() {
+            const selected = Array.from(categoryOptions.querySelectorAll('input:checked')).map(i => i.value);
+            myList.filter(item => {
+                if (selected.length === 0) return true;
+                const itemCats = item.values().category.split(', ').map(s => s.trim());
+                return selected.every(s => itemCats.includes(s));
+            });
+        }
+
+        // Search and Clear Logic
+        searchInput.addEventListener('input', () => {
+            myList.search(searchInput.value);
+        });
+
+        clearBtn.onclick = () => {
             searchInput.value = '';
             myList.search('');
+            applyFilter(); // Reset to show all based on category filters
         };
 
-        // Export logic
-        document.getElementById('download-csv-btn').onclick = function() {
-            const csv = Papa.unparse(myList.visibleItems.map(i => i.values()));
-            const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "epo_glossary_filtered.csv";
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 100);
+        // UI Interactions
+        document.getElementById('category-dropdown-btn').onclick = (e) => {
+            e.stopPropagation();
+            categoryOptions.style.display = categoryOptions.style.display === 'block' ? 'none' : 'block';
         };
+
+        document.getElementById('reset-categories-btn').onclick = () => {
+            categoryOptions.querySelectorAll('input').forEach(i => i.checked = false);
+            applyFilter();
+        };
+
+        document.addEventListener('click', () => categoryOptions.style.display = 'none');
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { 
+                searchInput.value = ''; 
+                myList.search(''); 
+                applyFilter();
+            }
+        });
     </script>
 </body>
 </html>
