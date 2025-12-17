@@ -84,7 +84,20 @@
         .search-container { display: flex; gap: 8px; }
         input[type="search"] { flex-grow: 1; cursor: text; }
 
-        .download-btn { background-color: var(--accent-green); color: white; border: none; font-weight: bold; margin-bottom: 20px; width: 100%; display: block; text-align: center; text-decoration: none; line-height: 44px; border-radius: 6px; }
+        .download-btn { 
+            background-color: var(--accent-green); 
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            margin-bottom: 20px; 
+            width: 100%; 
+            display: block; 
+            text-align: center; 
+            text-decoration: none; 
+            line-height: 44px; 
+            border-radius: 6px; 
+            cursor: pointer;
+        }
 
         .dropdown-container { position: relative; }
         .dropdown-options {
@@ -179,7 +192,7 @@
             </div>
         </div>
 
-        <a href="javascript:void(0)" id="download-csv-btn" class="download-btn">📥 Download Filtered Results (CSV)</a>
+        <button id="download-csv-btn" class="download-btn">📥 Download Filtered Results (CSV)</button>
         
         <div id="my-list">
             <table class="list-table">
@@ -200,6 +213,7 @@
     <script>
         const fileInput = document.getElementById('csv-file-input');
         const searchInterface = document.getElementById('search-interface');
+        const uploadSection = document.getElementById('csv-upload-section');
         const searchInput = document.getElementById('search-input');
         const categoryOptions = document.getElementById('category-options');
         const columnOptions = document.getElementById('column-options');
@@ -209,7 +223,9 @@
             const file = e.target.files[0];
             if (!file) return;
             Papa.parse(file, {
-                header: true, skipEmptyLines: true, encoding: "windows-1252",
+                header: true, 
+                skipEmptyLines: true, 
+                encoding: "windows-1252",
                 complete: (results) => processData(results.data)
             });
         });
@@ -224,6 +240,7 @@
                 const newItem = {};
                 for (let key in item) {
                     const k = key.trim().toLowerCase();
+                    // NL is explicitly excluded from processing
                     if (['en', 'de', 'fr', 'definition', 'category'].includes(k)) {
                         newItem[k] = (k === 'category') ? cleanCategory(item[key]).join(', ') : item[key];
                     }
@@ -234,8 +251,8 @@
             if (data.length > 0) {
                 renderList(data);
                 renderCategories(data);
+                uploadSection.style.display = 'none';
                 searchInterface.style.display = 'block';
-                document.getElementById('csv-upload-section').style.display = 'none';
             }
         }
 
@@ -272,6 +289,9 @@
 
         function applyFilter() {
             const selected = Array.from(categoryOptions.querySelectorAll('input:checked')).map(i => i.value);
+            // First clear the filter to reset the visible set
+            myList.filter();
+            // Then apply category filter logic
             myList.filter(item => {
                 if (selected.length === 0) return true;
                 const itemCats = item.values().category.split(',').map(s => s.trim());
@@ -279,7 +299,7 @@
             });
         }
 
-        // --- Event Listeners ---
+        // --- UI Listeners ---
 
         searchInput.addEventListener('input', () => {
             myList.search(searchInput.value);
@@ -316,31 +336,28 @@
             };
         });
 
-        // Fixed Download for iPad
+        // Fixed Download for iPad/iOS Safari
         document.getElementById('download-csv-btn').onclick = function() {
             const visibleItems = myList.visibleItems.map(item => item.values());
-            if (visibleItems.length === 0) {
-                alert("No data to export");
-                return;
-            }
+            if (visibleItems.length === 0) return alert("No data to export");
             
             const csv = Papa.unparse(visibleItems);
+            // \ufeff ensures UTF-8 BOM for Excel compatibility on iPad
             const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
             
-            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-                window.navigator.msSaveOrOpenBlob(blob, "glossary.csv");
-            } else {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "glossary_export.csv";
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 100);
-            }
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = 'none';
+            a.href = url;
+            a.download = "glossary_filtered.csv";
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup to prevent memory leaks
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 200);
         };
 
         document.addEventListener('click', () => {
