@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPO Glossary</title>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f4f4f9;
+            --card-bg: #ffffff;
+            --border-color: #eee;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: var(--primary-bg);
+            color: #333;
+        }
+
+        #csv-upload-section, #search-interface {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #search-interface { display: none; min-height: 100vh; }
+
+        h1, h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
+
+        /* --- HEADER LAYOUT --- */
+        .header-with-logo {
+            display: grid;
+            /* Mobile: Column 1 for Brand, Column 2 for Buttons */
+            grid-template-columns: auto 1fr; 
+            grid-template-areas: 
+                "branding btn-load"
+                "branding btn-down";
+            align-items: center;
+            column-gap: 20px;
+            row-gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .header-left {
+            grid-area: branding;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center Glossary under Logo on mobile */
+            gap: 5px;
+        }
+
+        .logo-img { 
+            height: 55px; 
+            width: auto; 
+            border-radius: 4px; 
+        }
+
+        .header-left h2 { 
+            border: none; 
+            margin: 0; 
+            font-size: 1.2rem; 
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* Mobile specific button alignment */
+        .load-new-btn { 
+            grid-area: btn-load; 
+            height: 38px;
+            font-size: 13px;
+            justify-self: end;
+            width: 100%;
+            max-width: 140px;
+        }
+
+        .download-btn { 
+            grid-area: btn-down;
+            background-color: var(--accent-green);
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            height: 38px;
+            line-height: 38px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0 12px;
+            white-space: nowrap;
+            justify-self: end;
+            width: 100%;
+            max-width: 140px;
+        }
+
+        /* --- DESKTOP VIEW REFINEMENTS --- */
+        @media (min-width: 768px) {
+            .header-with-logo {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between; /* Pushes Logo/Title Left, Buttons Right */
+                grid-template-areas: none;
+            }
+
+            .header-left {
+                flex-direction: row; /* Horizontal alignment for Desktop */
+                align-items: center;
+                gap: 15px;
+            }
+
+            .header-left h2 { 
+                font-size: 1.6rem; 
+                text-align: left;
+            }
+
+            .logo-img { height: 50px; }
+
+            /* Forces buttons to the far right and removes centering */
+            .button-container-desktop {
+                display: flex;
+                gap: 12px;
+                margin-left: auto; 
+            }
+
+            .download-btn, .load-new-btn {
+                width: auto;
+                max-width: none;
+                padding: 0 20px;
+                font-size: 14px;
+                grid-area: auto; /* Reset grid positioning */
+            }
+        }
+
+        /* --- UI ELEMENTS --- */
+        #filter-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            #filter-controls { flex-direction: row; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 250px; }
+        .control-group label { font-weight: bold; font-size: 0.95em; }
+
+        input[type="search"], .btn-ui {
+            height: 44px;
+            padding: 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: #fff;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .search-container { display: flex; gap: 8px; }
+        input[type="search"] { flex-grow: 1; cursor: text; }
+
+        .dropdown-container { position: relative; }
+        .dropdown-options {
+            position: absolute;
+            top: 48px;
+            left: 0;
+            background: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            max-height: 300px;
+            width: 100%;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            gap: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .list-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .list-table th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; white-space: nowrap; }
+        .sort-info { font-size: 0.7em; color: #888; display: block; }
+        .hidden-col { display: none !important; }
+
+        @media screen and (max-width: 768px) {
+            .list-table thead { display: none; }
+            .list-table tr { display: block; border: 1px solid #ddd; margin-bottom: 15px; border-radius: 8px; padding: 10px; background: #fff; }
+            .list-table td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+            .list-table td:last-child { border-bottom: none; }
+            .list-table td::before { content: attr(data-label); font-weight: bold; color: #666; margin-right: 10px; }
+        }
+
+        .list-table td { padding: 12px; vertical-align: top; }
+    </style>
+</head>
+<body>
+
+    <div id="csv-upload-section">
+        <h1>EPO Glossary</h1>
+        <p>Select a CSV file to load:</p>
+        <input type="file" id="csv-file-input" accept=".csv">
+    </div>
+
+    <div id="search-interface">
+        <div class="header-with-logo">
+            <div class="header-left">
+                <img src="logo.jpg" alt="Logo" class="logo-img">
+                <h2>Glossary</h2>
+            </div>
+            
+            <button id="download-csv-btn" class="download-btn">📥 Download (CSV)</button>
+            <button class="btn-ui load-new-btn" onclick="location.reload()">↻ Load New</button>
+        </div>
+
+        <div id="filter-controls">
+            <div class="control-group">
+                <label>Search:</label>
+                <div class="search-container">
+                    <input type="search" id="search-input" placeholder="Type to search...">
+                    <button id="clear-search-btn" class="btn-ui">Clear</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Category Filter:</label>
+                <div class="search-container">
+                    <div class="dropdown-container" style="flex-grow:1">
+                        <button id="cat-toggle-btn" class="btn-ui" style="width:100%">Select Categories...</button>
+                        <div id="category-options" class="dropdown-options"></div>
+                    </div>
+                    <button id="reset-categories-btn" class="btn-ui">Reset</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Columns:</label>
+                <div class="dropdown-container">
+                    <button id="col-toggle-btn" class="btn-ui" style="width:100%">Manage Columns...</button>
+                    <div id="column-options" class="dropdown-options">
+                        <div class="option-item"><input type="checkbox" checked data-col="en" id="chk-en"><label for="chk-en">EN</label></div>
+                        <div class="option-item"><input type="checkbox" checked data-col="de" id="chk-de"><label for="chk-de">DE</label></div>
+                        <div class="option-item"><input type="checkbox" checked data-col="fr" id="chk-fr"><label for="chk-fr">FR</label></div>
+                        <div class="option-item"><input type="checkbox" checked data-col="definition" id="chk-def"><label for="chk-def">Definition</label></div>
+                        <div class="option-item"><input type="checkbox" checked data-col="category" id="chk-cat"><label for="chk-cat">Category</label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="my-list">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th class="sort col-en" data-sort="en">EN <span class="sort-info">↕ Sort</span></th>
+                        <th class="sort col-de" data-sort="de">DE <span class="sort-info">↕ Sort</span></th>
+                        <th class="sort col-fr" data-sort="fr">FR <span class="sort-info">↕ Sort</span></th>
+                        <th class="sort col-definition" data-sort="definition">Definition <span class="sort-info">↕ Sort</span></th>
+                        <th class="sort col-category" data-sort="category">Category <span class="sort-info">↕ Sort</span></th>
+                    </tr>
+                </thead>
+                <tbody class="list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // CSV Parsing and List.js Logic
+        const fileInput = document.getElementById('csv-file-input');
+        const searchInterface = document.getElementById('search-interface');
+        const uploadSection = document.getElementById('csv-upload-section');
+        const searchInput = document.getElementById('search-input');
+        const categoryOptions = document.getElementById('category-options');
+        const columnOptions = document.getElementById('column-options');
+        let myList;
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                header: true, 
+                skipEmptyLines: true, 
+                encoding: "windows-1252", 
+                complete: (results) => processData(results.data)
+            });
+        });
+
+        function cleanCategory(str) {
+            if (!str) return [];
+            return String(str).replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).filter(s => s !== "");
+        }
+
+        function processData(rawData) {
+            const data = rawData.map(item => {
+                const newItem = {};
+                for (let key in item) {
+                    const k = key.trim().toLowerCase();
+                    if (['en', 'de', 'fr', 'definition', 'category'].includes(k)) {
+                        newItem[k] = (k === 'category') ? cleanCategory(item[key]).join(', ') : item[key];
+                    }
+                }
+                return newItem;
+            }).filter(i => i.en);
+
+            if (data.length > 0) {
+                renderList(data);
+                renderCategories(data);
+                uploadSection.style.display = 'none';
+                searchInterface.style.display = 'block';
+            }
+        }
+
+        function renderList(data) {
+            myList = new List('my-list', {
+                valueNames: ['en', 'de', 'fr', 'definition', 'category'],
+                item: `<tr>
+                    <td class="en col-en" data-label="EN"></td>
+                    <td class="de col-de" data-label="DE"></td>
+                    <td class="fr col-fr" data-label="FR"></td>
+                    <td class="definition col-definition" data-label="Definition"></td>
+                    <td class="category col-category" data-label="Category"></td>
+                </tr>`
+            }, data);
+        }
+
+        function renderCategories(data) {
+            categoryOptions.innerHTML = '';
+            let cats = new Set();
+            data.forEach(i => cleanCategory(i.category).forEach(c => cats.add(c)));
+            [...cats].sort().forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                div.innerHTML = `<input type="checkbox" value="${cat}" id="c-${cat}"><label for="c-${cat}">${cat}</label>`;
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    const cb = div.querySelector('input');
+                    if(e.target !== cb) cb.checked = !cb.checked;
+                    applyFilter();
+                };
+                categoryOptions.appendChild(div);
+            });
+        }
+
+        function applyFilter() {
+            const selected = Array.from(categoryOptions.querySelectorAll('input:checked')).map(i => i.value);
+            myList.filter(); 
+            myList.filter(item => {
+                if (selected.length === 0) return true;
+                const itemCats = item.values().category.split(',').map(s => s.trim());
+                return selected.every(s => itemCats.includes(s));
+            });
+        }
+
+        searchInput.addEventListener('input', () => {
+            myList.search(searchInput.value);
+        });
+
+        document.getElementById('clear-search-btn').onclick = () => {
+            searchInput.value = '';
+            myList.search('');
+        };
+
+        document.getElementById('cat-toggle-btn').onclick = (e) => {
+            e.stopPropagation();
+            categoryOptions.style.display = categoryOptions.style.display === 'block' ? 'none' : 'block';
+            columnOptions.style.display = 'none';
+        };
+
+        document.getElementById('col-toggle-btn').onclick = (e) => {
+            e.stopPropagation();
+            columnOptions.style.display = columnOptions.style.display === 'block' ? 'none' : 'block';
+            categoryOptions.style.display = 'none';
+        };
+
+        document.getElementById('reset-categories-btn').onclick = () => {
+            categoryOptions.querySelectorAll('input').forEach(i => i.checked = false);
+            myList.filter();
+        };
+
+        columnOptions.querySelectorAll('input').forEach(chk => {
+            chk.onchange = () => {
+                const colClass = `.col-${chk.dataset.col}`;
+                document.querySelectorAll(colClass).forEach(el => {
+                    el.classList.toggle('hidden-col', !chk.checked);
+                });
+            };
+        });
+
+        document.getElementById('download-csv-btn').onclick = function() {
+            const visibleItems = myList.visibleItems.map(item => item.values());
+            if (visibleItems.length === 0) return alert("No data to export");
+            const csv = Papa.unparse(visibleItems);
+            const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = 'none';
+            a.href = url;
+            a.download = "Glossary_export.csv";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 200);
+        };
+
+        document.addEventListener('click', () => {
+            categoryOptions.style.display = 'none';
+            columnOptions.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
