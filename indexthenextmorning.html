@@ -41,16 +41,16 @@
 
         h1, h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
 
-        /* HEADER LAYOUT LOGIC */
+        /* HEADER LAYOUT */
         .header-with-logo {
             display: grid;
             grid-template-columns: auto 1fr;
             grid-template-areas: 
                 "logo title"
-                "logo download";
+                "logo buttons";
             align-items: center;
             column-gap: 15px;
-            row-gap: 8px;
+            row-gap: 10px;
             margin-bottom: 20px;
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 15px;
@@ -65,72 +65,83 @@
 
         .title-area {
             grid-area: title;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
 
         .title-area h2 { 
             border: none; 
             margin: 0; 
-            font-size: 1.4rem; 
+            font-size: 1.5rem; 
+        }
+
+        .button-group {
+            grid-area: buttons;
+            display: flex;
+            gap: 8px;
         }
 
         .download-btn { 
-            grid-area: download;
             background-color: var(--accent-green);
             color: white; 
             border: none; 
             font-weight: bold; 
             text-align: center; 
             text-decoration: none; 
-            height: 38px;
-            line-height: 38px;
+            height: 40px;
+            line-height: 40px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
-            width: 100%;
+            font-size: 13px;
+            flex: 1; /* Equal width on mobile */
+            white-space: nowrap;
         }
 
-        /* DESKTOP REFINEMENTS */
+        .load-new-btn {
+            flex: 1; /* Equal width on mobile */
+            height: 40px;
+            white-space: nowrap;
+        }
+
+        /* DESKTOP VIEW */
         @media (min-width: 768px) {
             .header-with-logo {
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
-                align-items: center;
                 grid-template-areas: none;
             }
 
-            .logo-wrap {
+            .header-left {
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: 15px;
             }
 
             .logo-img { height: 45px; }
 
-            .button-group-desktop {
-                display: flex;
-                gap: 10px;
-                align-items: center;
+            .button-group {
+                grid-area: auto;
+                flex: 0 0 auto;
             }
 
-            .download-btn {
-                width: auto;
+            .download-btn, .load-new-btn {
+                flex: none;
                 padding: 0 20px;
-            }
-
-            #filter-controls { 
-                display: flex;
-                flex-direction: row; 
-                align-items: flex-start; 
-                gap: 20px; 
-                flex-wrap: wrap; 
+                width: auto;
             }
         }
 
-        /* UI ELEMENTS */
+        /* FILTER CONTROLS */
+        #filter-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            #filter-controls { flex-direction: row; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+        }
+
         .control-group { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 250px; }
         .control-group label { font-weight: bold; font-size: 0.95em; }
 
@@ -199,14 +210,16 @@
 
     <div id="search-interface">
         <div class="header-with-logo">
-            <img src="logo.jpg" alt="Logo" class="logo-img">
-            
-            <div class="title-area">
-                <h2>Glossary</h2>
-                <div class="button-group-desktop">
-                    <button id="download-csv-btn" class="download-btn">📥 Download (CSV)</button>
-                    <button class="btn-ui" onclick="location.reload()">↻ Load New</button>
+            <div class="header-left" style="display: contents;">
+                <img src="logo.jpg" alt="Logo" class="logo-img">
+                <div class="title-area">
+                    <h2>Glossary</h2>
                 </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-ui load-new-btn" onclick="location.reload()">↻ Load New</button>
+                <button id="download-csv-btn" class="download-btn">📥 Download (CSV)</button>
             </div>
         </div>
 
@@ -231,9 +244,9 @@
             </div>
 
             <div class="control-group">
-                <label>Columns:</label>
+                <label>Show/Hide Columns:</label>
                 <div class="dropdown-container">
-                    <button id="col-toggle-btn" class="btn-ui" style="width:100%">Manage...</button>
+                    <button id="col-toggle-btn" class="btn-ui" style="width:100%">Manage Columns...</button>
                     <div id="column-options" class="dropdown-options">
                         <div class="option-item"><input type="checkbox" checked data-col="en" id="chk-en"><label for="chk-en">EN</label></div>
                         <div class="option-item"><input type="checkbox" checked data-col="de" id="chk-de"><label for="chk-de">DE</label></div>
