@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPO Glossary</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --border-color: #e4e6eb;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --text-main: #1c1e21;
+            --panel-width: 400px;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 10px; background-color: var(--primary-bg); color: var(--text-main); overflow-x: hidden; }
+
+        /* --- LANDING PAGE --- */
+        #csv-upload-section {
+            max-width: 500px; margin: 60px auto; padding: 40px; background: var(--card-bg);
+            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
+            border: 2px dashed #cbd5e0;
+        }
+        #csv-upload-section h1 { margin-top: 0; font-size: 28px; color: var(--accent-blue); }
+        .file-input-wrapper { position: relative; margin-bottom: 20px; }
+        .btn-upload { background: var(--accent-blue); color: white; padding: 12px 24px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; }
+        #csv-file-input { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
+
+        /* --- RECENT FILES --- */
+        #recent-files-area { margin-top: 30px; text-align: left; border-top: 1px solid #eee; padding-top: 20px; display: none; }
+        #recent-files-area h3 { font-size: 14px; text-transform: uppercase; color: #666; margin-bottom: 10px; }
+        .recent-item { 
+            padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; 
+            margin-bottom: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between;
+        }
+        .recent-item:hover { background: #edf2f7; }
+
+        #search-interface { display: none; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 1200px; margin: 0 auto; min-height: 100vh; }
+
+        /* --- HEADER (Alignment Fix) --- */
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .logo-img { height: 40px; width: auto; }
+        
+        .btn-group { display: flex; gap: 8px; align-items: center; }
+        .btn-ui { height: 40px; padding: 0 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; }
+        .download-btn { background: var(--accent-green); color: white; border: none; font-weight: bold; }
+
+        @media screen and (max-width: 767px) {
+            .btn-group { flex-direction: column; gap: 6px; align-items: flex-end; width: 140px; } /* Fixed width for stacking */
+            .btn-ui { width: 100%; height: 36px; font-size: 12px; justify-content: flex-start; } /* Same size stacked */
+        }
+
+        /* --- TOOLBAR --- */
+        #filter-controls { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .search-container { position: relative; width: 100%; }
+        #search-input { width: 100%; height: 46px; padding: 0 40px 0 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; }
+        #clear-search-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer; color: #9ca3af; font-size: 22px; }
+        .secondary-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        /* --- DROPDOWNS --- */
+        .dropdown-container { position: relative; }
+        .dropdown-options { position: absolute; top: 45px; left: 0; background: white; border: 1px solid #d1d5db; z-index: 1000; max-height: 350px; width: 260px; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; }
+        .option-item { display: flex; align-items: center; padding: 12px; gap: 10px; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+
+        /* --- BADGE & RESET --- */
+        .count-badge { background: var(--accent-blue); color: white; font-size: 11px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .reset-link { color: var(--accent-red); font-size: 12px; font-weight: bold; cursor: pointer; padding: 2px 6px; background: #fff5f5; border-radius: 4px; }
+
+        /* --- TABLE & CARDS --- */
+        .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .list-table th, .list-table td { padding: 14px; border-bottom: 1px solid #f3f4f6; text-align: left; vertical-align: top; font-size: 15px; }
+        .list-table th { background: #f9fafb; cursor: pointer; font-weight: 600; }
+        
+        #my-list.hide-en .col-en, #my-list.hide-de .col-de, #my-list.hide-fr .col-fr, #my-list.hide-cat .col-cat { display: none !important; }
+
+        @media screen and (max-width: 767px) {
+            .list-table thead { display: none; }
+            .list-table, .list-table tbody, .list-table tr, .list-table td { display: block; width: 100%; }
+            .list-table tr { border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 16px; background: #fff; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+            .list-table td { display: flex; justify-content: space-between; padding: 8px 0; }
+            .list-table td::before { content: attr(data-label); font-weight: 700; color: #4b5563; font-size: 12px; }
+        }
+
+        /* --- DETAIL PANEL --- */
+        #detail-panel { position: fixed; top: 0; right: -100%; width: var(--panel-width); height: 100%; background: #fff; z-index: 2000; transition: right 0.3s ease; padding: 70px 25px; box-sizing: border-box; overflow-y: auto; }
+        #detail-panel.open { right: 0; }
+        #detail-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: none; z-index: 1999; backdrop-filter: blur(4px); }
+        .close-panel { position: absolute; top: 20px; right: 20px; background: #f3f4f6; border: none; font-size: 28px; cursor: pointer; border-radius: 50%; width: 48px; height: 48px; }
+
+        @media screen and (max-width: 767px) { #detail-panel { width: 100%; } }
+        .detail-section { margin-bottom: 25px; }
+        .detail-section h4 { color: #6b7280; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
+        .detail-section p { font-size: 18px; line-height: 1.5; margin: 0; }
+    </style>
+</head>
+<body>
+
+    <div id="csv-upload-section">
+        <h1>Glossary</h1>
+        <p>Choose a CSV file to begin.</p>
+        <div class="file-input-wrapper">
+            <button class="btn-upload">Choose File</button>
+            <input type="file" id="csv-file-input" accept=".csv">
+        </div>
+
+        <div id="recent-files-area">
+            <h3>Recently Used</h3>
+            <div id="recent-list"></div>
+        </div>
+    </div>
+
+    <div id="search-interface">
+        <div class="header-with-logo">
+            <div class="header-left"><img src="logo.jpg" class="logo-img"><h2>Glossary</h2></div>
+            <div class="btn-group">
+                <button class="btn-ui" onclick="location.reload()">↻ Load new</button>
+                <button id="download-csv-btn" class="btn-ui download-btn">📥 Download (CSV)</button>
+            </div>
+        </div>
+
+        <div id="filter-controls">
+            <div class="search-container">
+                <input type="search" id="search-input" placeholder="Search terms...">
+                <button id="clear-search-btn">×</button>
+            </div>
+            <div class="secondary-filters">
+                <div class="dropdown-container">
+                    <div id="cat-toggle-btn" class="btn-ui">🏷️ Categories <div id="badge-area" style="display:flex; align-items:center; gap:5px;"></div></div>
+                    <div id="category-dropdown" class="dropdown-options"><div id="category-list"></div></div>
+                </div>
+                <div class="dropdown-container">
+                    <button id="col-toggle-btn" class="btn-ui">⚙️ Columns</button>
+                    <div id="column-options" class="dropdown-options">
+                        <div class="option-item"><input type="checkbox" checked data-col="en" id="chk-en"><label for="chk-en">EN</label></div>
+                        <div class="option-item"><input type="checkbox" checked data-col="de" id="chk-de"><label for="chk-de">DE</label></div>
+                        <div class="option-item"><input type="checkbox" checked data-col="fr" id="chk-fr"><label for="chk-fr">FR</label></div>
+                        <div class="option-item"><input type="checkbox" checked data-col="cat" id="chk-cat"><label for="chk-cat">Category</label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="my-list">
+            <table class="list-table">
+                <thead>
+                    <tr><th class="sort col-en" data-sort="en" style="width: 30%;">EN</th><th class="sort col-de" data-sort="de" style="width: 30%;">DE</th><th class="sort col-fr" data-sort="fr" style="width: 30%;">FR</th><th class="sort col-cat" data-sort="category" style="width: 10%;">Category</th></tr>
+                </thead>
+                <tbody class="list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="detail-overlay"></div>
+    <div id="detail-panel">
+        <button class="close-panel" onclick="closePanel()">&times;</button>
+        <h2 id="det-en">Term</h2>
+        <div class="detail-section"><h4>Definition</h4><p id="det-def">-</p></div>
+        <div class="detail-section"><h4>German (DE)</h4><p id="det-de">-</p></div>
+        <div class="detail-section"><h4>French (FR)</h4><p id="det-fr">-</p></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('csv-file-input');
+        const listContainer = document.getElementById('my-list');
+        const searchInput = document.getElementById('search-input');
+        const categoryList = document.getElementById('category-list');
+        let myList;
+
+        // --- STORAGE LOGIC ---
+        window.onload = () => {
+            const history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+            if(history.length > 0) {
+                document.getElementById('recent-files-area').style.display = 'block';
+                const list = document.getElementById('recent-list');
+                history.reverse().forEach((item, index) => {
+                    if(index > 2) return; // Show only last 3
+                    const div = document.createElement('div');
+                    div.className = 'recent-item';
+                    div.innerHTML = `<span>📄 ${item.name}</span><small>${item.date}</small>`;
+                    div.onclick = () => initApp(item.data);
+                    list.appendChild(div);
+                });
+            }
+        };
+
+        function saveToHistory(name, data) {
+            let history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+            history.push({ name, data, date: new Date().toLocaleDateString() });
+            if(history.length > 5) history.shift();
+            localStorage.setItem('glossary_history', JSON.stringify(history));
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true, encoding: "windows-1252",
+                complete: (r) => {
+                    const data = r.data.map(i => ({
+                        en: i.EN || '', de: i.DE || '', fr: i.FR || '', definition: i.Definition || '',
+                        category: i.Category ? i.Category.replace(/[\[\]"]/g, '') : ''
+                    })).filter(i => i.en);
+                    saveToHistory(file.name, data);
+                    initApp(data);
+                }
+            });
+        });
+
+        function initApp(data) {
+            myList = new List('search-interface', {
+                valueNames: ['en', 'de', 'fr', 'category', 'definition'],
+                item: `<tr onclick="openPanel(this)">
+                    <td class="en col-en" data-label="EN"></td><td class="de col-de" data-label="DE"></td><td class="fr col-fr" data-label="FR"></td><td class="category col-cat" data-label="CAT"></td><td class="definition" style="display:none"></td>
+                </tr>`
+            }, data);
+
+            const cats = [...new Set(data.flatMap(i => i.category.split(',').map(s => s.trim())))].filter(s => s).sort();
+            categoryList.innerHTML = '';
+            cats.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                div.innerHTML = `<input type="checkbox" value="${c}" id="c-${c}"><label for="c-${c}">${c}</label>`;
+                div.onclick = (e) => { e.stopPropagation(); const cb = div.querySelector('input'); if(e.target !== cb) cb.checked = !cb.checked; applyFilter(); };
+                categoryList.appendChild(div);
+            });
+
+            document.getElementById('csv-upload-section').style.display = 'none';
+            document.getElementById('search-interface').style.display = 'block';
+        }
+
+        function applyFilter() {
+            const selected = Array.from(categoryList.querySelectorAll('input:checked')).map(i => i.value);
+            const badgeArea = document.getElementById('badge-area');
+            if(selected.length > 0) {
+                badgeArea.innerHTML = `<span class="count-badge">${selected.length}</span><span class="reset-link" onclick="resetCats(event)">Reset</span>`;
+            } else { badgeArea.innerHTML = ''; }
+            myList.filter(item => {
+                if (selected.length === 0) return true;
+                const itemCats = item.values().category.split(',').map(s => s.trim());
+                return selected.every(s => itemCats.includes(s));
+            });
+        }
+
+        window.resetCats = (e) => {
+            if(e) e.stopPropagation();
+            categoryList.querySelectorAll('input:checked').forEach(i => i.checked = false);
+            applyFilter();
+        };
+
+        document.querySelectorAll('#column-options input').forEach(chk => {
+            chk.onchange = () => listContainer.classList.toggle(`hide-${chk.dataset.col}`, !chk.checked);
+        });
+
+        searchInput.oninput = (e) => myList.search(e.target.value);
+        searchInput.onkeydown = (e) => { if (e.key === 'Escape') { searchInput.value = ''; myList.search(''); } };
+        document.getElementById('clear-search-btn').onclick = () => { searchInput.value = ''; myList.search(''); };
+
+        function openPanel(row) {
+            const term = row.querySelector('.en').textContent;
+            const item = myList.get('en', term)[0].values();
+            document.getElementById('det-en').textContent = item.en;
+            document.getElementById('det-de').textContent = item.de || '-';
+            document.getElementById('det-fr').textContent = item.fr || '-';
+            document.getElementById('det-def').textContent = item.definition || 'No definition available.';
+            document.getElementById('detail-panel').classList.add('open');
+            document.getElementById('detail-overlay').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePanel() { document.getElementById('detail-panel').classList.remove('open'); document.getElementById('detail-overlay').style.display = 'none'; document.body.style.overflow = ''; }
+        
+        document.getElementById('cat-toggle-btn').onclick = (e) => toggleDrop('category-dropdown', e);
+        document.getElementById('col-toggle-btn').onclick = (e) => toggleDrop('column-options', e);
+        function toggleDrop(id, e) {
+            e.stopPropagation();
+            const el = document.getElementById(id);
+            const isVis = el.style.display === 'block';
+            document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+            el.style.display = isVis ? 'none' : 'block';
+        }
+        document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+        document.getElementById('download-csv-btn').onclick = function() {
+            const csv = Papa.unparse(myList.visibleItems.map(item => item.values()));
+            const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_export.csv"; a.click();
+        };
+    </script>
+</body>
+</html>
