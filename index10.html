@@ -16,6 +16,7 @@
             --border-color: #eee;
             --accent-blue: #0066cc;
             --accent-green: #28a745;
+            --accent-red: #dc3545;
             --panel-width: 400px;
         }
 
@@ -72,7 +73,7 @@
 
         .download-btn { background: var(--accent-green); color: white; border: none; }
 
-        /* --- COUNTER BADGE --- */
+        /* --- COUNTER BADGE & RESET --- */
         .count-badge {
             background-color: var(--accent-blue);
             color: white;
@@ -87,6 +88,20 @@
             flex-shrink: 0;
         }
 
+        .btn-reset-small {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #666;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+        .btn-reset-small:hover { background: var(--accent-red); color: white; border-color: var(--accent-red); }
+
         /* --- TOOLBAR --- */
         #filter-controls {
             display: grid;
@@ -97,6 +112,8 @@
 
         @media (min-width: 1025px) {
             #filter-controls { display: flex; gap: 20px; }
+            /* Slightly smaller search box on desktop */
+            .search-container { max-width: 300px; } 
         }
 
         .search-container { position: relative; display: flex; width: 100%; }
@@ -164,6 +181,8 @@
             .list-table td { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 15px; }
             .list-table td:last-child { border-bottom: none; }
             .list-table td::before { content: attr(data-label); font-weight: bold; color: #555; margin-right: 15px; min-width: 60px; }
+            /* Keep original mobile appearance for Category box */
+            .btn-reset-small { display: none; } 
         }
 
         /* --- DETAIL PANEL --- */
@@ -209,7 +228,10 @@
             </div>
 
             <div class="dropdown-container">
-                <button id="cat-toggle-btn" class="btn-ui">🏷️ <span>Categories</span><span id="cat-badge-container"></span></button>
+                <button id="cat-toggle-btn" class="btn-ui">
+                    🏷️ <span>Categories</span>
+                    <span id="cat-indicator-group" style="display: flex; align-items: center; gap: 4px;"></span>
+                </button>
                 <div id="category-dropdown" class="dropdown-options">
                     <div class="dropdown-search-wrapper" onclick="event.stopPropagation()">
                         <input type="text" id="cat-search-input" class="dropdown-search-input" placeholder="Filter categories...">
@@ -266,7 +288,7 @@
         const columnOptions = document.getElementById('column-options');
         const detailPanel = document.getElementById('detail-panel');
         const detailOverlay = document.getElementById('detail-overlay');
-        const catBadgeContainer = document.getElementById('cat-badge-container');
+        const catIndicatorGroup = document.getElementById('cat-indicator-group');
         let myList;
 
         fileInput.addEventListener('change', (e) => {
@@ -346,13 +368,29 @@
 
         function applyFilter() {
             const selected = Array.from(categoryList.querySelectorAll('input:checked')).map(i => i.value);
-            catBadgeContainer.innerHTML = selected.length > 0 ? `<span class="count-badge">${selected.length}</span>` : '';
+            const count = selected.length;
+            
+            if (count > 0) {
+                catIndicatorGroup.innerHTML = `
+                    <span class="count-badge">${count}</span>
+                    <button class="btn-reset-small" onclick="resetCategories(event)">Reset</button>
+                `;
+            } else {
+                catIndicatorGroup.innerHTML = '';
+            }
+
             myList.filter();
             myList.filter(item => {
-                if (selected.length === 0) return true;
+                if (count === 0) return true;
                 const itemCats = item.values().category.split(',').map(s => s.trim());
                 return selected.every(s => itemCats.includes(s));
             });
+        }
+
+        function resetCategories(e) {
+            if(e) e.stopPropagation();
+            categoryList.querySelectorAll('input:checked').forEach(cb => cb.checked = false);
+            applyFilter();
         }
 
         searchInput.addEventListener('input', () => myList.search(searchInput.value));
