@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPO Glossary</title>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f4f4f9;
+            --card-bg: #ffffff;
+            --border-color: #eee;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --panel-width: 400px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: var(--primary-bg);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        #csv-upload-section, #search-interface {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #search-interface { display: none; min-height: 100vh; }
+
+        /* --- HEADER --- */
+        .header-with-logo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .logo-img { height: 45px; width: auto; }
+        .header-left h2 { margin: 0; font-size: 1.4rem; }
+
+        .btn-group { display: flex; gap: 8px; }
+        .btn-ui {
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .download-btn { background: var(--accent-green); color: white; border: none; }
+
+        /* --- COUNTER BADGE & RESET --- */
+        .count-badge {
+            background-color: var(--accent-blue);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-reset-small {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #666;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+        .btn-reset-small:hover { background: var(--accent-red); color: white; border-color: var(--accent-red); }
+
+        /* --- TOOLBAR --- */
+        #filter-controls {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        @media (min-width: 1025px) {
+            #filter-controls { display: flex; gap: 20px; }
+            .search-container { max-width: 300px; } 
+        }
+
+        .search-container { position: relative; display: flex; width: 100%; }
+        #search-input { flex-grow: 1; height: 40px; padding: 0 35px 0 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        #clear-search-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer; color: #999; font-size: 18px; }
+
+        /* --- DROPDOWNS --- */
+        .dropdown-container { position: relative; }
+        .dropdown-options {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            max-height: 350px;
+            width: 260px;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .dropdown-search-wrapper {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            z-index: 10;
+        }
+
+        .dropdown-search-input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            gap: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        /* --- TABLE --- */
+        .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .list-table th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; border-bottom: 2px solid #ddd; font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
+        .list-table tr { cursor: pointer; transition: background 0.2s; }
+        .list-table tr:hover { background-color: #f0f7ff; }
+        .list-table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; font-size: 14px; overflow-wrap: break-word; }
+        
+        /* Column Hiding Logic */
+        .hidden-col { display: none !important; }
+
+        /* --- MOBILE STYLES --- */
+        @media screen and (max-width: 767px) {
+            .list-table thead { display: none; }
+            .list-table { table-layout: auto; }
+            .list-table tr { 
+                display: block; border: 1px solid #ddd; margin-bottom: 15px; 
+                border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            .list-table td { 
+                display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; 
+            }
+            .list-table td:last-child { border-bottom: none; }
+            .list-table td::before { 
+                content: attr(data-label); font-weight: bold; color: #555; margin-right: 15px; min-width: 60px; 
+            }
+            .btn-reset-small { display: none; } 
+        }
+
+        /* --- DETAIL PANEL --- */
+        #detail-panel {
+            position: fixed; top: 0; right: -100%; width: var(--panel-width); height: 100%;
+            background: #fff; box-shadow: -5px 0 15px rgba(0,0,0,0.15); z-index: 2000;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 40px 25px; box-sizing: border-box; overflow-y: auto;
+        }
+        #detail-panel.open { right: 0; }
+        #detail-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 1999; backdrop-filter: blur(2px); }
+        .close-panel { position: absolute; top: 15px; right: 15px; background: #eee; border: none; font-size: 24px; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .detail-section { margin-bottom: 25px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
+        .detail-section h4 { margin: 0 0 8px 0; color: var(--accent-blue); text-transform: uppercase; font-size: 11px; letter-spacing: 1.2px; }
+        .detail-section p { margin: 0; line-height: 1.6; font-size: 17px; color: #222; }
+
+        @media (max-width: 767px) { #detail-panel { width: 100%; } .hide-mobile { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div id="csv-upload-section">
+        <h1>EPO Glossary</h1>
+        <p>Select a CSV file to load:</p>
+        <input type="file" id="csv-file-input" accept=".csv">
+    </div>
+
+    <div id="search-interface">
+        <div class="header-with-logo">
+            <div class="header-left">
+                <img src="logo.jpg" alt="Logo" class="logo-img">
+                <h2>Glossary</h2>
+            </div>
+            <div class="btn-group">
+                <button id="download-csv-btn" class="btn-ui download-btn">📥 <span class="hide-mobile">Download</span></button>
+                <button class="btn-ui" onclick="location.reload()">↻ <span class="hide-mobile">New</span></button>
+            </div>
+        </div>
+
+        <div id="filter-controls">
+            <div class="search-container">
+                <input type="search" id="search-input" placeholder="Search terms...">
+                <button id="clear-search-btn">×</button>
+            </div>
+
+            <div class="dropdown-container">
+                <button id="cat-toggle-btn" class="btn-ui">
+                    🏷️ <span>Categories</span>
+                    <span id="cat-indicator-group" style="display: flex; align-items: center; gap: 4px;"></span>
+                </button>
+                <div id="category-dropdown" class="dropdown-options">
+                    <div class="dropdown-search-wrapper" onclick="event.stopPropagation()">
+                        <input type="text" id="cat-search-input" class="dropdown-search-input" placeholder="Filter categories...">
+                    </div>
+                    <div id="category-list"></div>
+                </div>
+            </div>
+
+            <div class="dropdown-container">
+                <button id="col-toggle-btn" class="btn-ui">⚙️ <span class="hide-mobile">Columns</span></button>
+                <div id="column-options" class="dropdown-options">
+                    <div class="option-item"><input type="checkbox" checked data-col="en" id="chk-en"><label for="chk-en">EN</label></div>
+                    <div class="option-item"><input type="checkbox" checked data-col="de" id="chk-de"><label for="chk-de">DE</label></div>
+                    <div class="option-item"><input type="checkbox" checked data-col="fr" id="chk-fr"><label for="chk-fr">FR</label></div>
+                    <div class="option-item"><input type="checkbox" checked data-col="category" id="chk-cat"><label for="chk-cat">Category</label></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="my-list">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th class="sort col-en" data-sort="en" style="width: 30%;">EN</th>
+                        <th class="sort col-de" data-sort="de" style="width: 30%;">DE</th>
+                        <th class="sort col-fr" data-sort="fr" style="width: 30%;">FR</th>
+                        <th class="sort col-category" data-sort="category" style="width: 10%;">Category</th>
+                    </tr>
+                </thead>
+                <tbody class="list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="detail-overlay"></div>
+    <div id="detail-panel">
+        <button class="close-panel" onclick="closePanel()">×</button>
+        <h2 id="det-en" style="margin-top:20px; font-size: 24px;">Term</h2>
+        <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Details below</p>
+        <div class="detail-section"><h4>Definition</h4><p id="det-def">-</p></div>
+        <div class="detail-section"><h4>German (DE)</h4><p id="det-de">-</p></div>
+        <div class="detail-section"><h4>French (FR)</h4><p id="det-fr">-</p></div>
+        <div class="detail-section"><h4>Category</h4><p id="det-cat">-</p></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('csv-file-input');
+        const searchInterface = document.getElementById('search-interface');
+        const uploadSection = document.getElementById('csv-upload-section');
+        const searchInput = document.getElementById('search-input');
+        const catSearchInput = document.getElementById('cat-search-input');
+        const categoryList = document.getElementById('category-list');
+        const categoryDropdown = document.getElementById('category-dropdown');
+        const columnOptions = document.getElementById('column-options');
+        const detailPanel = document.getElementById('detail-panel');
+        const detailOverlay = document.getElementById('detail-overlay');
+        const catIndicatorGroup = document.getElementById('cat-indicator-group');
+        let myList;
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true, encoding: "windows-1252",
+                complete: (results) => processData(results.data)
+            });
+        });
+
+        function cleanCategory(str) {
+            if (!str) return [];
+            return String(str).replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).filter(s => s !== "");
+        }
+
+        function processData(rawData) {
+            const data = rawData.map(item => {
+                const newItem = {};
+                for (let key in item) {
+                    const k = key.trim().toLowerCase();
+                    if (['en', 'de', 'fr', 'definition', 'category'].includes(k)) {
+                        newItem[k] = (k === 'category') ? cleanCategory(item[key]).join(', ') : item[key];
+                    }
+                }
+                return newItem;
+            }).filter(i => i.en);
+            if (data.length > 0) { renderList(data); renderCategories(data); uploadSection.style.display = 'none'; searchInterface.style.display = 'block'; }
+        }
+
+        function renderList(data) {
+            myList = new List('my-list', {
+                valueNames: ['en', 'de', 'fr', 'category', 'definition'],
+                item: `<tr onclick="openPanel(this)">
+                    <td class="en col-en" data-label="EN"></td>
+                    <td class="de col-de" data-label="DE"></td>
+                    <td class="fr col-fr" data-label="FR"></td>
+                    <td class="category col-category" data-label="CAT"></td>
+                    <td class="definition hidden-col" style="display:none"></td>
+                </tr>`
+            }, data);
+        }
+
+        function openPanel(row) {
+            const enText = row.querySelector('.en').textContent;
+            const item = myList.get('en', enText)[0].values();
+            document.getElementById('det-en').textContent = item.en;
+            document.getElementById('det-de').textContent = item.de || '-';
+            document.getElementById('det-fr').textContent = item.fr || '-';
+            document.getElementById('det-def').textContent = item.definition || 'No definition available.';
+            document.getElementById('det-cat').textContent = item.category || '-';
+            detailPanel.classList.add('open'); detailOverlay.style.display = 'block'; document.body.style.overflow = 'hidden'; 
+        }
+
+        function closePanel() { detailPanel.classList.remove('open'); detailOverlay.style.display = 'none'; document.body.style.overflow = ''; }
+        detailOverlay.onclick = closePanel;
+
+        function renderCategories(data) {
+            categoryList.innerHTML = '';
+            let cats = new Set();
+            data.forEach(i => cleanCategory(i.category).forEach(c => cats.add(c)));
+            [...cats].sort().forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                div.innerHTML = `<input type="checkbox" value="${cat}" id="c-${cat}"><label for="c-${cat}">${cat}</label>`;
+                div.onclick = (e) => { e.stopPropagation(); const cb = div.querySelector('input'); if(e.target !== cb) cb.checked = !cb.checked; applyFilter(); };
+                categoryList.appendChild(div);
+            });
+        }
+
+        catSearchInput.oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('#category-list .option-item').forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        };
+
+        function applyFilter() {
+            const selected = Array.from(categoryList.querySelectorAll('input:checked')).map(i => i.value);
+            const count = selected.length;
+            
+            if (count > 0) {
+                catIndicatorGroup.innerHTML = `
+                    <span class="count-badge">${count}</span>
+                    <button class="btn-reset-small" onclick="resetCategories(event)">Reset</button>
+                `;
+            } else {
+                catIndicatorGroup.innerHTML = '';
+            }
+
+            myList.filter();
+            myList.filter(item => {
+                if (count === 0) return true;
+                const itemCats = item.values().category.split(',').map(s => s.trim());
+                return selected.every(s => itemCats.includes(s));
+            });
+        }
+
+        function resetCategories(e) {
+            if(e) e.stopPropagation();
+            categoryList.querySelectorAll('input:checked').forEach(cb => cb.checked = false);
+            applyFilter();
+        }
+
+        searchInput.addEventListener('input', () => myList.search(searchInput.value));
+        document.getElementById('clear-search-btn').onclick = () => { searchInput.value = ''; myList.search(''); };
+        document.getElementById('cat-toggle-btn').onclick = (e) => { e.stopPropagation(); categoryDropdown.style.display = categoryDropdown.style.display === 'block' ? 'none' : 'block'; columnOptions.style.display = 'none'; if (categoryDropdown.style.display === 'block') catSearchInput.focus(); };
+        document.getElementById('col-toggle-btn').onclick = (e) => { e.stopPropagation(); columnOptions.style.display = columnOptions.style.display === 'block' ? 'none' : 'block'; categoryDropdown.style.display = 'none'; };
+
+        columnOptions.querySelectorAll('input').forEach(chk => {
+            chk.onchange = () => {
+                const colKey = chk.dataset.col;
+                const colClass = `.col-${colKey}`;
+                document.querySelectorAll(colClass).forEach(el => {
+                    el.classList.toggle('hidden-col', !chk.checked);
+                });
+            };
+        });
+
+        document.getElementById('download-csv-btn').onclick = function() {
+            const csv = Papa.unparse(myList.visibleItems.map(item => item.values()));
+            const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_export.csv"; a.click();
+        };
+
+        document.addEventListener('click', () => { categoryDropdown.style.display = 'none'; columnOptions.style.display = 'none'; });
+    </script>
+</body>
+</html>
