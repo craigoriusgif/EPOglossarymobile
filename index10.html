@@ -66,10 +66,26 @@
             font-size: 14px;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            position: relative;
         }
 
         .download-btn { background: var(--accent-green); color: white; border: none; }
+
+        /* --- COUNTER BADGE --- */
+        .count-badge {
+            background-color: var(--accent-blue);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
 
         /* --- TOOLBAR --- */
         #filter-controls {
@@ -81,17 +97,13 @@
 
         @media (min-width: 1025px) {
             #filter-controls { display: flex; gap: 20px; }
-            .hide-desktop { display: none; }
-        }
-
-        @media (max-width: 1024px) {
-            .hide-mobile { display: none; }
         }
 
         .search-container { position: relative; display: flex; width: 100%; }
         #search-input { flex-grow: 1; height: 40px; padding: 0 35px 0 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
         #clear-search-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer; color: #999; font-size: 18px; }
 
+        /* --- DROPDOWNS --- */
         .dropdown-container { position: relative; }
         .dropdown-options {
             position: absolute;
@@ -101,19 +113,18 @@
             border: 1px solid #ccc;
             z-index: 1000;
             max-height: 350px;
-            width: 250px;
+            width: 260px;
             overflow-y: auto;
             border-radius: 8px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.15);
             display: none;
         }
 
-        /* Search bar inside dropdown */
         .dropdown-search-wrapper {
             position: sticky;
             top: 0;
             background: white;
-            padding: 8px;
+            padding: 10px;
             border-bottom: 1px solid #eee;
             z-index: 10;
         }
@@ -147,70 +158,28 @@
         @media screen and (max-width: 767px) {
             .list-table thead { display: none; }
             .list-table tr { 
-                display: block; 
-                border: 1px solid #ddd; 
-                margin-bottom: 15px; 
-                border-radius: 10px; 
-                padding: 12px; 
-                background: #fff;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                display: block; border: 1px solid #ddd; margin-bottom: 15px; 
+                border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             }
-            .list-table td { 
-                display: flex; 
-                justify-content: space-between; 
-                padding: 10px 0; 
-                border-bottom: 1px solid #f0f0f0; 
-                font-size: 15px;
-            }
+            .list-table td { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 15px; }
             .list-table td:last-child { border-bottom: none; }
-            .list-table td::before { 
-                content: attr(data-label); 
-                font-weight: bold; 
-                color: #555; 
-                margin-right: 15px;
-                min-width: 60px;
-            }
+            .list-table td::before { content: attr(data-label); font-weight: bold; color: #555; margin-right: 15px; min-width: 60px; }
         }
 
         /* --- DETAIL PANEL --- */
         #detail-panel {
-            position: fixed;
-            top: 0;
-            right: -100%;
-            width: var(--panel-width);
-            height: 100%;
-            background: #fff;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.15);
-            z-index: 2000;
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 40px 25px;
-            box-sizing: border-box;
-            overflow-y: auto;
+            position: fixed; top: 0; right: -100%; width: var(--panel-width); height: 100%;
+            background: #fff; box-shadow: -5px 0 15px rgba(0,0,0,0.15); z-index: 2000;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 40px 25px; box-sizing: border-box; overflow-y: auto;
         }
-
         #detail-panel.open { right: 0; }
-        
-        #detail-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.4);
-            display: none;
-            z-index: 1999;
-            backdrop-filter: blur(2px);
-        }
-
+        #detail-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 1999; backdrop-filter: blur(2px); }
         .close-panel { position: absolute; top: 15px; right: 15px; background: #eee; border: none; font-size: 24px; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .detail-section { margin-bottom: 25px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
-        .detail-section:last-child { border: none; }
         .detail-section h4 { margin: 0 0 8px 0; color: var(--accent-blue); text-transform: uppercase; font-size: 11px; letter-spacing: 1.2px; }
         .detail-section p { margin: 0; line-height: 1.6; font-size: 17px; color: #222; }
 
-        @media (max-width: 767px) {
-            #detail-panel { width: 100%; }
-        }
+        @media (max-width: 767px) { #detail-panel { width: 100%; } .hide-mobile { display: none; } }
     </style>
 </head>
 <body>
@@ -240,7 +209,7 @@
             </div>
 
             <div class="dropdown-container">
-                <button id="cat-toggle-btn" class="btn-ui">🏷️ <span id="cat-btn-label">Categories</span></button>
+                <button id="cat-toggle-btn" class="btn-ui">🏷️ <span>Categories</span><span id="cat-badge-container"></span></button>
                 <div id="category-dropdown" class="dropdown-options">
                     <div class="dropdown-search-wrapper" onclick="event.stopPropagation()">
                         <input type="text" id="cat-search-input" class="dropdown-search-input" placeholder="Filter categories...">
@@ -278,25 +247,12 @@
     <div id="detail-overlay"></div>
     <div id="detail-panel">
         <button class="close-panel" onclick="closePanel()">×</button>
-        <h2 id="det-en" style="margin-top:20px; color: #000; font-size: 24px;">Term</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 25px;">Tap the '×' or outside to close</p>
-        
-        <div class="detail-section">
-            <h4>Definition</h4>
-            <p id="det-def" style="font-weight: 500;">-</p>
-        </div>
-        <div class="detail-section">
-            <h4>German (DE)</h4>
-            <p id="det-de">-</p>
-        </div>
-        <div class="detail-section">
-            <h4>French (FR)</h4>
-            <p id="det-fr">-</p>
-        </div>
-        <div class="detail-section">
-            <h4>Category</h4>
-            <p id="det-cat">-</p>
-        </div>
+        <h2 id="det-en" style="margin-top:20px; font-size: 24px;">Term</h2>
+        <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Details below</p>
+        <div class="detail-section"><h4>Definition</h4><p id="det-def">-</p></div>
+        <div class="detail-section"><h4>German (DE)</h4><p id="det-de">-</p></div>
+        <div class="detail-section"><h4>French (FR)</h4><p id="det-fr">-</p></div>
+        <div class="detail-section"><h4>Category</h4><p id="det-cat">-</p></div>
     </div>
 
     <script>
@@ -310,7 +266,7 @@
         const columnOptions = document.getElementById('column-options');
         const detailPanel = document.getElementById('detail-panel');
         const detailOverlay = document.getElementById('detail-overlay');
-        const catBtnLabel = document.getElementById('cat-btn-label');
+        const catBadgeContainer = document.getElementById('cat-badge-container');
         let myList;
 
         fileInput.addEventListener('change', (e) => {
@@ -338,13 +294,7 @@
                 }
                 return newItem;
             }).filter(i => i.en);
-
-            if (data.length > 0) {
-                renderList(data);
-                renderCategories(data);
-                uploadSection.style.display = 'none';
-                searchInterface.style.display = 'block';
-            }
+            if (data.length > 0) { renderList(data); renderCategories(data); uploadSection.style.display = 'none'; searchInterface.style.display = 'block'; }
         }
 
         function renderList(data) {
@@ -363,24 +313,15 @@
         function openPanel(row) {
             const enText = row.querySelector('.en').textContent;
             const item = myList.get('en', enText)[0].values();
-            
             document.getElementById('det-en').textContent = item.en;
             document.getElementById('det-de').textContent = item.de || '-';
             document.getElementById('det-fr').textContent = item.fr || '-';
             document.getElementById('det-def').textContent = item.definition || 'No definition available.';
             document.getElementById('det-cat').textContent = item.category || '-';
-            
-            detailPanel.classList.add('open');
-            detailOverlay.style.display = 'block';
-            document.body.style.overflow = 'hidden'; 
+            detailPanel.classList.add('open'); detailOverlay.style.display = 'block'; document.body.style.overflow = 'hidden'; 
         }
 
-        function closePanel() {
-            detailPanel.classList.remove('open');
-            detailOverlay.style.display = 'none';
-            document.body.style.overflow = '';
-        }
-
+        function closePanel() { detailPanel.classList.remove('open'); detailOverlay.style.display = 'none'; document.body.style.overflow = ''; }
         detailOverlay.onclick = closePanel;
 
         function renderCategories(data) {
@@ -391,35 +332,24 @@
                 const div = document.createElement('div');
                 div.className = 'option-item';
                 div.innerHTML = `<input type="checkbox" value="${cat}" id="c-${cat}"><label for="c-${cat}">${cat}</label>`;
-                div.onclick = (e) => {
-                    e.stopPropagation();
-                    const cb = div.querySelector('input');
-                    if(e.target !== cb) cb.checked = !cb.checked;
-                    applyFilter();
-                };
+                div.onclick = (e) => { e.stopPropagation(); const cb = div.querySelector('input'); if(e.target !== cb) cb.checked = !cb.checked; applyFilter(); };
                 categoryList.appendChild(div);
             });
         }
 
-        // Dropdown Search Logic
         catSearchInput.oninput = (e) => {
             const term = e.target.value.toLowerCase();
             document.querySelectorAll('#category-list .option-item').forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(term) ? 'flex' : 'none';
+                item.style.display = item.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
             });
         };
 
         function applyFilter() {
             const selected = Array.from(categoryList.querySelectorAll('input:checked')).map(i => i.value);
-            const count = selected.length;
-            
-            // Update button label with counter
-            catBtnLabel.textContent = count > 0 ? `Categories (${count})` : 'Categories';
-
+            catBadgeContainer.innerHTML = selected.length > 0 ? `<span class="count-badge">${selected.length}</span>` : '';
             myList.filter();
             myList.filter(item => {
-                if (count === 0) return true;
+                if (selected.length === 0) return true;
                 const itemCats = item.values().category.split(',').map(s => s.trim());
                 return selected.every(s => itemCats.includes(s));
             });
@@ -427,46 +357,20 @@
 
         searchInput.addEventListener('input', () => myList.search(searchInput.value));
         document.getElementById('clear-search-btn').onclick = () => { searchInput.value = ''; myList.search(''); };
-
-        document.getElementById('cat-toggle-btn').onclick = (e) => {
-            e.stopPropagation();
-            categoryDropdown.style.display = categoryDropdown.style.display === 'block' ? 'none' : 'block';
-            columnOptions.style.display = 'none';
-            if (categoryDropdown.style.display === 'block') {
-                catSearchInput.focus();
-            }
-        };
-
-        document.getElementById('col-toggle-btn').onclick = (e) => {
-            e.stopPropagation();
-            columnOptions.style.display = columnOptions.style.display === 'block' ? 'none' : 'block';
-            categoryDropdown.style.display = 'none';
-        };
+        document.getElementById('cat-toggle-btn').onclick = (e) => { e.stopPropagation(); categoryDropdown.style.display = categoryDropdown.style.display === 'block' ? 'none' : 'block'; columnOptions.style.display = 'none'; if (categoryDropdown.style.display === 'block') catSearchInput.focus(); };
+        document.getElementById('col-toggle-btn').onclick = (e) => { e.stopPropagation(); columnOptions.style.display = columnOptions.style.display === 'block' ? 'none' : 'block'; categoryDropdown.style.display = 'none'; };
 
         columnOptions.querySelectorAll('input').forEach(chk => {
-            chk.onchange = () => {
-                const colClass = `.col-${chk.dataset.col}`;
-                document.querySelectorAll(colClass).forEach(el => {
-                    el.classList.toggle('hidden-col', !chk.checked);
-                });
-            };
+            chk.onchange = () => { document.querySelectorAll(`.col-${chk.dataset.col}`).forEach(el => el.classList.toggle('hidden-col', !chk.checked)); };
         });
 
         document.getElementById('download-csv-btn').onclick = function() {
-            const visibleItems = myList.visibleItems.map(item => item.values());
-            const csv = Papa.unparse(visibleItems);
+            const csv = Papa.unparse(myList.visibleItems.map(item => item.values()));
             const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "Glossary_export.csv";
-            a.click();
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_export.csv"; a.click();
         };
 
-        document.addEventListener('click', () => {
-            categoryDropdown.style.display = 'none';
-            columnOptions.style.display = 'none';
-        });
+        document.addEventListener('click', () => { categoryDropdown.style.display = 'none'; columnOptions.style.display = 'none'; });
     </script>
 </body>
 </html>
