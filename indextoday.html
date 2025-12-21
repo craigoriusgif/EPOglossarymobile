@@ -39,12 +39,12 @@
 
         /* --- HEADERS --- */
         .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 10px; flex-shrink: 0; }
-        
         .header-center-filters { display: flex; flex-grow: 1; gap: 12px; align-items: center; }
         .search-container { position: relative; flex: 2; display: flex; align-items: center; }
         input[type="search"] { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
         
         .btn-ui { height: 40px; padding: 0 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+        .download-btn { background: var(--accent-green); color: white; border: none; font-weight: bold; }
         
         .dropdown-container { position: relative; display: flex; }
         .dropdown-options { position: absolute; top: 45px; background: white; border: 1px solid #d1d5db; z-index: 1000; max-height: 350px; width: 260px; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; color: var(--text-main); }
@@ -58,11 +58,17 @@
         iframe { width: 100%; height: 100%; border: none; border-radius: 8px; background: white; }
 
         .list-table { width: 100%; border-collapse: collapse; background: white; }
-        .list-table th, .list-table td { padding: 14px; border-bottom: 1px solid #f3f4f6; text-align: left; }
-        .list-table th { background: #f9fafb; cursor: pointer; font-size: 13px; position: sticky; top: 0; }
+        .list-table th, .list-table td { padding: 14px; border-bottom: 1px solid #f3f4f6; text-align: left; font-size: 13px; }
+        .list-table th { background: #f9fafb; cursor: pointer; position: sticky; top: 0; }
+        
+        #today-section .list-table { background: transparent; color: inherit; }
+        #today-section .list-table td { border-bottom: 1px solid rgba(128,128,128,0.2); }
 
-        /* Column Hide Logic */
         #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
+
+        /* --- THEME SWITCHER --- */
+        .theme-switcher { margin-top: auto; padding-top: 15px; display: flex; gap: 8px; justify-content: center; border-top: 1px solid rgba(128,128,128,0.2); }
+        .theme-dot { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #999; cursor: pointer; }
 
         /* --- FOOTER --- */
         .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 8px; align-items: center; }
@@ -76,6 +82,7 @@
 
     <div id="upload-screen">
         <h1>Glossary Pro</h1>
+        <p>Load Master CSV to begin</p>
         <div style="position:relative; margin-bottom: 20px;">
             <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white;">Choose Master File</button>
             <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
@@ -86,31 +93,24 @@
         <section id="main-section">
             <div class="header-with-logo">
                 <h2 id="main-title" style="margin:0;">Glossary</h2>
-                
                 <div class="header-center-filters" id="main-filters-row">
                     <div class="search-container"><input type="search" id="master-search" placeholder="Search terms..."></div>
-                    
                     <div class="dropdown-container">
-                        <button class="btn-ui" onclick="toggleDrop('cat-drop', event)">
-                            🏷️ Categories <span id="master-cat-badge"></span>
-                        </button>
-                        <div id="cat-drop" class="dropdown-options">
-                            <div id="master-cat-list" style="padding:10px;"></div>
-                        </div>
+                        <button class="btn-ui" onclick="toggleDrop('cat-drop', event)">🏷️ Categories <span id="master-cat-badge"></span></button>
+                        <div id="cat-drop" class="dropdown-options"><div id="master-cat-list" style="padding:10px;"></div></div>
                     </div>
-
                     <div class="dropdown-container">
                         <button class="btn-ui" onclick="toggleDrop('col-drop', event)">⚙️ Columns</button>
                         <div id="col-drop" class="dropdown-options" style="padding:15px;">
-                            <div><label><input type="checkbox" checked data-col="en" onchange="toggleCol('en', this.checked)"> English</label></div>
-                            <div style="margin-top:8px;"><label><input type="checkbox" checked data-col="de" onchange="toggleCol('de', this.checked)"> German</label></div>
-                            <div style="margin-top:8px;"><label><input type="checkbox" checked data-col="fr" onchange="toggleCol('fr', this.checked)"> French</label></div>
-                            <div style="margin-top:8px;"><label><input type="checkbox" checked data-col="cat" onchange="toggleCol('cat', this.checked)"> Category</label></div>
+                            <div><label><input type="checkbox" checked onchange="toggleCol('en', this.checked)"> English</label></div>
+                            <div style="margin-top:8px;"><label><input type="checkbox" checked onchange="toggleCol('de', this.checked)"> German</label></div>
+                            <div style="margin-top:8px;"><label><input type="checkbox" checked onchange="toggleCol('fr', this.checked)"> French</label></div>
+                            <div style="margin-top:8px;"><label><input type="checkbox" checked onchange="toggleCol('cat', this.checked)"> Category</label></div>
                         </div>
                     </div>
                 </div>
-
                 <div style="display:flex; gap:8px;">
+                    <button class="btn-ui download-btn" onclick="downloadMaster()">📥 Download</button>
                     <button class="btn-ui" onclick="location.reload()">↻ Load New</button>
                 </div>
             </div>
@@ -129,24 +129,26 @@
                         <tbody class="list"></tbody>
                     </table>
                 </div>
-                <div id="legal-iframe-container">
-                    <iframe id="legal-frame" src=""></iframe>
-                </div>
+                <div id="legal-iframe-container"><iframe id="legal-frame" src=""></iframe></div>
             </div>
         </section>
 
         <section id="today-section" class="theme-dark">
-            <h2 style="margin:0; color:inherit;">Today</h2>
-            <div id="drop-area" style="border: 2px dashed #666; padding: 20px; text-align: center; margin-top: 15px; cursor: pointer;">
-                Drop Case Vocab (CSV)
+            <h2 style="margin:0; color:inherit;">Today's Case</h2>
+            <div id="drop-area" style="border: 2px dashed rgba(128,128,128,0.5); padding: 30px; text-align: center; margin-top: 15px; cursor: pointer; border-radius: 8px;">
+                Drop Case CSV or Word Table
             </div>
             <div id="today-list-container" class="hidden" style="margin-top:15px; overflow-y:auto; flex-grow:1;">
-                <input type="search" id="today-search" style="width:100%; margin-bottom:10px; padding:8px; border-radius:4px;" placeholder="Filter today...">
-                <div id="today-list">
-                    <table class="list-table" style="width:100%; background:transparent;">
-                        <tbody class="list"></tbody>
-                    </table>
-                </div>
+                <input type="search" id="today-search" style="width:100%; margin-bottom:10px; padding:10px; border-radius:6px; border:1px solid rgba(128,128,128,0.3); background:rgba(255,255,255,0.1); color:inherit;" placeholder="Filter today...">
+                <table class="list-table">
+                    <tbody id="today-body" class="list"></tbody>
+                </table>
+            </div>
+
+            <div class="theme-switcher">
+                <div class="theme-dot" style="background:#fff" onclick="setTodayTheme('light')"></div>
+                <div class="theme-dot" style="background:#2d3436" onclick="setTodayTheme('dark')"></div>
+                <div class="theme-dot" style="background:#f4ecd8" onclick="setTodayTheme('sepia')"></div>
             </div>
         </section>
     </div>
@@ -154,6 +156,7 @@
     <div class="pane-controls">
         <button class="toggle-btn active-view" id="btn-split" onclick="setLayout('split')">Split View</button>
         <button class="toggle-btn" id="btn-master" onclick="setLayout('master')">Main Only</button>
+        <button class="toggle-btn" id="btn-today" onclick="setLayout('today')">Today Only</button>
         <span style="color:#666">|</span>
         <button class="toggle-btn" id="btn-guidelines" style="background:#636e72;" onclick="showLegal('https://www.epo.org/en/legal/guidelines-epc/2025/index.html', 'Guidelines', 'btn-guidelines')">Guidelines</button>
         <button class="toggle-btn" id="btn-epc" style="background:#d63031;" onclick="showLegal('https://www.epo.org/en/legal/epc/2020/convention.html', 'EPC', 'btn-epc')">EPC</button>
@@ -161,8 +164,9 @@
     </div>
 
     <script>
-        let masterList;
-        
+        let masterList, todayList;
+
+        // --- MASTER UPLOAD ---
         document.getElementById('master-file-input').onchange = (e) => {
             const file = e.target.files[0];
             Papa.parse(file, {
@@ -182,7 +186,6 @@
         function launchApp(data) {
             document.getElementById('upload-screen').classList.add('hidden');
             document.getElementById('app-wrapper').classList.remove('hidden');
-            
             masterList = new List('main-section', {
                 valueNames: ['en', 'de', 'fr', 'category'],
                 item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td><td class="category col-cat"></td></tr>`
@@ -192,69 +195,81 @@
             const filterEl = document.getElementById('master-cat-list');
             cats.forEach(c => {
                 const div = document.createElement('div');
-                div.style.padding = "5px 0";
                 div.innerHTML = `<label><input type="checkbox" value="${c}" class="cat-chk"> ${c}</label>`;
                 div.querySelector('input').onchange = updateMasterFilters;
                 filterEl.appendChild(div);
             });
         }
 
+        // --- TODAY PANE DRAG & DROP ---
+        const dropArea = document.getElementById('drop-area');
+        dropArea.onclick = () => { let i = document.createElement('input'); i.type='file'; i.onchange=(e)=>handleTodayFile(e.target.files[0]); i.click(); };
+        dropArea.ondragover = (e) => { e.preventDefault(); dropArea.style.borderColor = 'var(--accent-blue)'; };
+        dropArea.ondrop = (e) => { e.preventDefault(); handleTodayFile(e.dataTransfer.files[0]); };
+
+        function handleTodayFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'csv') {
+                Papa.parse(file, { header: true, complete: (r) => initTodayList(r.data) });
+            } else if (ext === 'docx') {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    mammoth.convertToHtml({arrayBuffer: e.target.result}).then(result => {
+                        const temp = document.createElement('div'); temp.innerHTML = result.value;
+                        const rows = Array.from(temp.querySelectorAll('tr'));
+                        if (rows.length > 1) {
+                            const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.innerText.trim().toLowerCase());
+                            const data = rows.slice(1).map(tr => {
+                                let obj = {}; const cells = tr.querySelectorAll('td');
+                                headers.forEach((h, i) => { if(cells[i]) obj[h] = cells[i].innerText.trim(); });
+                                return obj;
+                            });
+                            initTodayList(data);
+                        }
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function initTodayList(data) {
+            document.getElementById('drop-area').classList.add('hidden');
+            document.getElementById('today-list-container').classList.remove('hidden');
+            todayList = new List('today-section', {
+                valueNames: ['en', 'de', 'fr'],
+                item: `<tr><td class="en"></td><td class="de"></td><td class="fr"></td></tr>`
+            }, data);
+        }
+
+        // --- LOGIC & UI ---
         function updateMasterFilters() {
             const sel = Array.from(document.querySelectorAll('.cat-chk:checked')).map(i => i.value);
-            const badgeArea = document.getElementById('master-cat-badge');
-            
-            if (sel.length > 0) {
-                badgeArea.innerHTML = `
-                    <div style="display:flex; align-items:center; display:inline-flex;">
-                        <div class="count-badge">${sel.length}</div>
-                        <span class="reset-link-inline" onclick="resetCats(event)">Reset</span>
-                    </div>`;
-            } else {
-                badgeArea.innerHTML = '';
-            }
-            
-            masterList.filter(item => {
-                if (sel.length === 0) return true;
-                const itemCats = item.values().category.split(',').map(s => s.trim());
-                return sel.every(s => itemCats.includes(s));
-            });
+            const badge = document.getElementById('master-cat-badge');
+            badge.innerHTML = sel.length ? `<div style="display:inline-flex;align-items:center;"><div class="count-badge">${sel.length}</div><span class="reset-link-inline" onclick="resetCats(event)">Reset</span></div>` : '';
+            masterList.filter(item => sel.length === 0 || sel.every(s => item.values().category.includes(s)));
         }
 
-        function resetCats(e) {
-            if(e) e.stopPropagation();
-            document.querySelectorAll('.cat-chk').forEach(c => c.checked = false);
-            updateMasterFilters();
-        }
-
-        function toggleCol(col, show) {
-            const listEl = document.getElementById('main-list');
-            listEl.classList.toggle(`hide-${col}`, !show);
-        }
+        function resetCats(e) { e.stopPropagation(); document.querySelectorAll('.cat-chk').forEach(c => c.checked = false); updateMasterFilters(); }
+        function toggleCol(col, show) { document.getElementById('main-list').classList.toggle(`hide-${col}`, !show); }
+        function setTodayTheme(t) { const ts = document.getElementById('today-section'); ts.className = ''; ts.id = 'today-section'; ts.classList.add('theme-'+t); }
 
         function setLayout(mode) {
+            const main = document.getElementById('main-section');
+            const today = document.getElementById('today-section');
             document.getElementById('main-list').classList.remove('hidden');
             document.getElementById('main-filters-row').style.visibility = 'visible';
             document.getElementById('legal-iframe-container').style.display = 'none';
-            document.getElementById('main-title').textContent = 'Glossary';
-            
-            const main = document.getElementById('main-section');
-            const today = document.getElementById('today-section');
-            
-            if(mode === 'master') {
-                today.classList.add('hidden');
-                main.classList.add('full-width');
-            } else {
-                today.classList.remove('hidden');
-                main.classList.remove('full-width');
-            }
+            main.classList.remove('hidden', 'full-width');
+            today.classList.remove('hidden', 'full-width');
+            if(mode === 'master') { today.classList.add('hidden'); main.classList.add('full-width'); }
+            if(mode === 'today') { main.classList.add('hidden'); today.classList.add('full-width'); }
             updateBtnStyle('btn-' + mode);
         }
 
         function showLegal(url, title, btnId) {
             document.getElementById('main-list').classList.add('hidden');
             document.getElementById('main-filters-row').style.visibility = 'hidden';
-            const container = document.getElementById('legal-iframe-container');
-            container.style.display = 'block';
+            document.getElementById('legal-iframe-container').style.display = 'block';
             document.getElementById('legal-frame').src = url;
             document.getElementById('main-title').textContent = title;
             updateBtnStyle(btnId);
@@ -262,8 +277,13 @@
 
         function updateBtnStyle(id) {
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active-view'));
-            const btn = document.getElementById(id);
-            if(btn) btn.classList.add('active-view');
+            if(document.getElementById(id)) document.getElementById(id).classList.add('active-view');
+        }
+
+        function downloadMaster() {
+            const csv = Papa.unparse(masterList.visibleItems.map(i => i.values()));
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'filtered_glossary.csv'; a.click();
         }
 
         function toggleDrop(id, e) {
@@ -276,6 +296,7 @@
 
         document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
         document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value);
+        document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
     </script>
 </body>
 </html>
