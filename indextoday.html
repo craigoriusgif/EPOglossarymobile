@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EPO Glossary - Pro Mode</title>
     
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
@@ -29,20 +27,23 @@
 
         /* --- LAYOUT --- */
         #app-wrapper { display: flex; height: 100vh; width: 100vw; }
-        #main-section { flex: 2; padding: 15px; overflow-y: auto; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; }
-        #today-section { flex: 1; padding: 15px; overflow-y: auto; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; }
+        #main-section { flex: 2; padding: 15px; overflow: hidden; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; }
+        #today-section { flex: 1; padding: 15px; overflow: hidden; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: background 0.3s; }
+
+        /* TODAY THEMES */
+        #today-section.theme-light { background: #ffffff; color: #1c1e21; }
+        #today-section.theme-dark { background: #2d3436; color: #dfe6e9; }
+        #today-section.theme-sepia { background: #f4ecd8; color: #5b4636; }
 
         .hidden { display: none !important; }
         .full-width { flex: 1 0 100% !important; border: none !important; }
 
         /* --- HEADERS --- */
         .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 10px; flex-shrink: 0; }
-        .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .logo-img { height: 42px; width: auto; }
         
         .header-center-filters { display: flex; flex-grow: 1; gap: 12px; align-items: center; }
         .search-container { position: relative; flex: 2; display: flex; align-items: center; }
-        
         input[type="search"] { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
         
         .btn-ui { height: 40px; padding: 0 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
@@ -52,69 +53,62 @@
         .dropdown-options { position: absolute; top: 45px; background: white; border: 1px solid #d1d5db; z-index: 1000; max-height: 350px; width: 260px; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; color: var(--text-main); }
         
         .count-badge { background: var(--accent-blue); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: 6px; }
-        .reset-link { color: var(--accent-red); font-size: 11px; font-weight: bold; cursor: pointer; padding: 4px 8px; background: #fff5f5; border-radius: 4px; display: block; text-align: center; margin: 10px; border: 1px solid #fed7d7; }
+        .reset-link { color: var(--accent-red); font-size: 11px; font-weight: bold; cursor: pointer; padding: 8px; background: #fff5f5; border-radius: 4px; display: block; text-align: center; margin: 10px; border: 1px solid #fed7d7; }
 
         /* --- CONTENT AREAS --- */
-        #main-scroll-area { flex-grow: 1; overflow-y: auto; }
-        #legal-iframe-container { flex-grow: 1; width: 100%; border: none; display: none; }
+        #main-scroll-area { flex-grow: 1; overflow-y: auto; height: 100%; }
+        #legal-iframe-container { flex-grow: 1; height: 100%; width: 100%; display: none; }
         iframe { width: 100%; height: 100%; border: none; border-radius: 8px; background: white; }
 
         .list-table { width: 100%; border-collapse: collapse; background: white; }
         #today-section .list-table { background: transparent; }
         .list-table th, .list-table td { padding: 14px; border-bottom: 1px solid #f3f4f6; text-align: left; }
-        #today-section .list-table td, #today-section .list-table th { border-bottom-color: #4b5563; }
+        #today-section .list-table td { border-bottom: 1px solid rgba(128,128,128,0.2); }
         .list-table th { background: #f9fafb; cursor: pointer; font-size: 13px; position: sticky; top: 0; }
-        #today-section .list-table th { background: #4b5563; color: white; }
+        #today-section .list-table th { background: rgba(0,0,0,0.1); color: inherit; }
 
-        #drop-area { border: 2px dashed #636e72; border-radius: 12px; padding: 40px 20px; text-align: center; margin-top: 20px; cursor: pointer; }
-        #drop-area.dragover { background: #3d484d; border-color: var(--accent-blue); }
+        /* --- FOOTER BUTTONS --- */
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 8px; align-items: center; }
+        .toggle-btn { padding: 10px 16px; border-radius: 20px; border: 1px solid #ccc; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.2s; }
+        
+        /* Specific Colors */
+        #btn-guidelines { background: #636e72; color: white; }
+        #btn-epc { background: #d63031; color: white; }
+        #btn-caselaw { background: #ffffff; color: #2d3436; }
+        #btn-split, #btn-master, #btn-today { background: #1c1e21; color: white; border: none; }
+        
+        .active-view { transform: scale(1.1); outline: 2px solid var(--accent-blue); outline-offset: 2px; }
 
-        /* --- VIEW CONTROLS (BOTTOM) --- */
-        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 8px; flex-wrap: wrap; max-width: 90vw; }
-        .toggle-btn { background: #1c1e21; color: white; border: none; padding: 10px 16px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; opacity: 0.85; transition: all 0.2s; }
-        .toggle-btn:hover { opacity: 1; transform: translateY(-1px); background: #000; }
-        .toggle-btn.active { background: var(--accent-blue); opacity: 1; box-shadow: 0 0 10px rgba(0,102,204,0.4); }
-        .btn-sep { width: 1px; height: 25px; background: rgba(255,255,255,0.2); align-self: center; margin: 0 4px; }
+        /* Theme Switcher */
+        .theme-switcher { margin-top: auto; padding-top: 20px; display: flex; gap: 5px; justify-content: center; }
+        .theme-btn { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #666; cursor: pointer; }
 
-        /* Column Visibility */
         #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
-        #today-list.hide-en-t .col-en, #today-list.hide-de-t .col-de, #today-list.hide-fr-t .col-fr { display: none !important; }
-
-        #upload-screen { max-width: 500px; margin: 100px auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .recent-item { padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-top: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; }
+        #upload-screen { max-width: 500px; margin: 100px auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="upload-screen">
         <h1>Glossary Pro</h1>
-        <p>Upload the <strong>Master CSV</strong> to begin.</p>
         <div style="position:relative; margin-bottom: 20px;">
-            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white; font-weight:bold;">Choose Master File</button>
+            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white;">Choose Master File</button>
             <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
-        </div>
-        <div id="recent-area" class="hidden">
-            <h3 style="font-size: 12px; text-transform: uppercase; color: #666; text-align: left;">Recently Used</h3>
-            <div id="recent-list"></div>
         </div>
     </div>
 
     <div id="app-wrapper" class="hidden">
-        
         <section id="main-section">
             <div class="header-with-logo">
                 <div class="header-left">
-                    <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'">
-                    <h2 id="main-title">Glossary</h2>
+                    <h2 id="main-title" style="margin:0;">Glossary</h2>
                 </div>
                 <div class="header-center-filters" id="main-filters-row">
-                    <div class="search-container">
-                        <input type="search" id="master-search" placeholder="Search terms...">
-                    </div>
+                    <div class="search-container"><input type="search" id="master-search" placeholder="Search terms..."></div>
                     <div class="dropdown-container">
                         <button class="btn-ui" onclick="toggleDrop('cat-drop', event)">🏷️ Categories <span id="master-cat-badge"></span></button>
                         <div id="cat-drop" class="dropdown-options">
-                            <span class="reset-link" onclick="resetCats(event)">Reset Categories</span>
+                            <span class="reset-link" onclick="resetCats(event)">Reset All Categories</span>
                             <div id="master-cat-list" style="padding:0 10px 10px 10px;"></div>
                         </div>
                     </div>
@@ -148,95 +142,63 @@
                         <tbody class="list"></tbody>
                     </table>
                 </div>
-            </div>
-
-            <div id="legal-iframe-container">
-                <iframe id="legal-frame" src=""></iframe>
+                <div id="legal-iframe-container">
+                    <iframe id="legal-frame" src=""></iframe>
+                </div>
             </div>
         </section>
 
-        <section id="today-section">
-            <div class="header-with-logo" style="border-bottom-color: #4b5563;">
-                <h2 style="margin:0; color:white;">Today</h2>
-                <div class="dropdown-container">
-                    <button class="btn-ui" onclick="toggleDrop('today-col-drop', event)">⚙️ Columns</button>
-                    <div id="today-col-drop" class="dropdown-options" style="padding:10px;">
-                        <div><input type="checkbox" checked data-tcol="en-t" class="t-col-chk"> EN</div>
-                        <div><input type="checkbox" checked data-tcol="de-t" class="t-col-chk"> DE</div>
-                        <div><input type="checkbox" checked data-tcol="fr-t" class="t-col-chk"> FR</div>
-                    </div>
-                </div>
+        <section id="today-section" class="theme-dark">
+            <h2 style="margin:0; color:inherit;">Today</h2>
+            <div id="drop-area" style="border: 2px dashed #666; padding: 20px; text-align: center; margin-top: 15px; cursor: pointer;">
+                Drop Case Vocab
             </div>
-
-            <div id="drop-area">
-                <div style="font-size: 32px;">📄</div>
-                <p>Drag Case Vocab Here<br><small>(CSV or Word)</small></p>
-            </div>
-
-            <div id="today-list-container" class="hidden">
-                <div class="search-container" style="margin-bottom:15px;">
-                    <input type="search" id="today-search" placeholder="Search case terms...">
-                </div>
+            <div id="today-list-container" class="hidden" style="margin-top:15px; overflow-y:auto; flex-grow:1;">
+                <input type="search" id="today-search" style="width:100%; margin-bottom:10px; padding:8px; border-radius:4px;" placeholder="Filter today...">
                 <div id="today-list">
-                    <table class="list-table">
-                        <thead><tr><th class="sort col-en" data-sort="en">EN</th><th class="sort col-de" data-sort="de">DE</th><th class="sort col-fr" data-sort="fr">FR</th></tr></thead>
+                    <table class="list-table" style="width:100%">
                         <tbody class="list"></tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="theme-switcher">
+                <div class="theme-btn" style="background:#fff" onclick="setTodayTheme('light')"></div>
+                <div class="theme-btn" style="background:#2d3436" onclick="setTodayTheme('dark')"></div>
+                <div class="theme-btn" style="background:#f4ecd8" onclick="setTodayTheme('sepia')"></div>
             </div>
         </section>
     </div>
 
     <div class="pane-controls">
-        <button class="toggle-btn active" id="btn-split" onclick="setLayout('split')">Split View</button>
+        <button class="toggle-btn active-view" id="btn-split" onclick="setLayout('split')">Split View</button>
         <button class="toggle-btn" id="btn-master" onclick="setLayout('master')">Main Only</button>
         <button class="toggle-btn" id="btn-today" onclick="setLayout('today')">Today Only</button>
-        <div class="btn-sep"></div>
-        <button class="toggle-btn" id="btn-caselaw" onclick="showLegal('https://www.epo.org/en/legal/case-law/2025/index.html', 'Case Law', 'btn-caselaw')">Case Law</button>
+        <span style="color:#666">|</span>
         <button class="toggle-btn" id="btn-guidelines" onclick="showLegal('https://www.epo.org/en/legal/guidelines-epc/2025/index.html', 'Guidelines', 'btn-guidelines')">Guidelines</button>
         <button class="toggle-btn" id="btn-epc" onclick="showLegal('https://www.epo.org/en/legal/epc/2020/convention.html', 'EPC', 'btn-epc')">EPC</button>
+        <button class="toggle-btn" id="btn-caselaw" onclick="showLegal('https://www.epo.org/en/legal/case-law/2025/index.html', 'Case Law', 'btn-caselaw')">Case Law</button>
     </div>
 
     <script>
-        let masterList, todayList;
-        const mainSec = document.getElementById('main-section');
-        const todaySec = document.getElementById('today-section');
-        const listContainer = document.getElementById('main-list');
-        const iframeContainer = document.getElementById('legal-iframe-container');
-        const iframe = document.getElementById('legal-frame');
-
-        window.onload = () => {
-            const history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
-            if(history.length > 0) {
-                document.getElementById('recent-area').classList.remove('hidden');
-                const list = document.getElementById('recent-list');
-                history.reverse().forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'recent-item';
-                    div.innerHTML = `<span>📄 ${item.name}</span><small>${item.date}</small>`;
-                    div.onclick = () => launchApp(item.data);
-                    list.appendChild(div);
-                });
-            }
-        };
-
+        let masterList;
+        
         document.getElementById('master-file-input').onchange = (e) => {
             const file = e.target.files[0];
-            if(!file) return;
             Papa.parse(file, {
                 header: true, skipEmptyLines: true,
                 complete: (r) => {
-                    const clean = r.data.map(row => ({
-                        en: row.EN || row.en || '',
-                        de: row.DE || row.de || '',
-                        fr: row.FR || row.fr || '',
-                        category: (row.Category || row.category || '').replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).join(', '),
-                        definition: row.Definition || row.definition || ''
-                    }));
-                    let hist = JSON.parse(localStorage.getItem('glossary_history') || '[]');
-                    hist.push({ name: file.name, data: clean, date: new Date().toLocaleDateString() });
-                    if(hist.length > 3) hist.shift();
-                    localStorage.setItem('glossary_history', JSON.stringify(hist));
+                    const clean = r.data.map(row => {
+                        // Tidy Categories: Remove quotes, brackets, and handle arrays
+                        let rawCat = row.Category || row.category || '';
+                        let cleanCat = rawCat.replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).filter(s => s).join(', ');
+                        return {
+                            en: row.EN || row.en || '',
+                            de: row.DE || row.de || '',
+                            fr: row.FR || row.fr || '',
+                            category: cleanCat
+                        };
+                    });
                     launchApp(clean);
                 }
             });
@@ -245,10 +207,7 @@
         function launchApp(data) {
             document.getElementById('upload-screen').classList.add('hidden');
             document.getElementById('app-wrapper').classList.remove('hidden');
-            initMaster(data);
-        }
-
-        function initMaster(data) {
+            
             masterList = new List('main-section', {
                 valueNames: ['en', 'de', 'fr', 'category'],
                 item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td><td class="category col-cat"></td></tr>`
@@ -256,119 +215,79 @@
 
             const cats = [...new Set(data.flatMap(i => i.category.split(',').map(s => s.trim())))].filter(s => s).sort();
             const filterEl = document.getElementById('master-cat-list');
-            filterEl.innerHTML = '';
             cats.forEach(c => {
                 const div = document.createElement('div');
-                div.style.padding = '8px';
-                div.innerHTML = `<input type="checkbox" value="${c}" class="cat-chk"> ${c}`;
-                div.onclick = (e) => {
-                    const cb = div.querySelector('input');
-                    if(e.target !== cb) cb.checked = !cb.checked;
-                    updateMasterFilters();
-                };
+                div.innerHTML = `<label><input type="checkbox" value="${c}" class="cat-chk"> ${c}</label>`;
+                div.querySelector('input').onchange = updateMasterFilters;
                 filterEl.appendChild(div);
             });
         }
 
+        // AND Logic Filtering
         function updateMasterFilters() {
             const sel = Array.from(document.querySelectorAll('.cat-chk:checked')).map(i => i.value);
             document.getElementById('master-cat-badge').innerHTML = sel.length ? `<div class="count-badge">${sel.length}</div>` : '';
-            masterList.filter(item => sel.length === 0 || sel.every(s => item.values().category.includes(s)));
+            
+            masterList.filter(item => {
+                if (sel.length === 0) return true;
+                const itemCats = item.values().category.split(',').map(s => s.trim());
+                return sel.every(s => itemCats.includes(s)); // Every selected category must be present
+            });
         }
 
         function resetCats(e) {
-            if(e) e.stopPropagation();
+            e.stopPropagation();
             document.querySelectorAll('.cat-chk').forEach(c => c.checked = false);
             updateMasterFilters();
         }
 
         function showLegal(url, title, btnId) {
-            listContainer.classList.add('hidden');
-            document.getElementById('main-filters-row').classList.add('hidden');
-            iframeContainer.style.display = 'block';
-            iframe.src = url;
+            document.getElementById('main-list').classList.add('hidden');
+            document.getElementById('main-filters-row').style.visibility = 'hidden';
+            const container = document.getElementById('legal-iframe-container');
+            container.style.display = 'block';
+            document.getElementById('legal-frame').src = url;
             document.getElementById('main-title').textContent = title;
-            updateActiveBtn(btnId);
+            updateBtnStyle(btnId);
         }
 
         function setLayout(mode) {
-            listContainer.classList.remove('hidden');
-            document.getElementById('main-filters-row').classList.remove('hidden');
-            iframeContainer.style.display = 'none';
+            document.getElementById('main-list').classList.remove('hidden');
+            document.getElementById('main-filters-row').style.visibility = 'visible';
+            document.getElementById('legal-iframe-container').style.display = 'none';
             document.getElementById('main-title').textContent = 'Glossary';
             
-            mainSec.classList.remove('hidden', 'full-width');
-            todaySec.classList.remove('hidden', 'full-width');
+            const main = document.getElementById('main-section');
+            const today = document.getElementById('today-section');
+            main.classList.remove('hidden', 'full-width');
+            today.classList.remove('hidden', 'full-width');
             
-            if(mode === 'master') { todaySec.classList.add('hidden'); mainSec.classList.add('full-width'); updateActiveBtn('btn-master'); }
-            else if(mode === 'today') { mainSec.classList.add('hidden'); todaySec.classList.add('full-width'); updateActiveBtn('btn-today'); }
-            else { updateActiveBtn('btn-split'); }
+            if(mode === 'master') { today.classList.add('hidden'); main.classList.add('full-width'); }
+            if(mode === 'today') { main.classList.add('hidden'); today.classList.add('full-width'); }
+            updateBtnStyle('btn-' + mode);
         }
 
-        function updateActiveBtn(id) {
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        function updateBtnStyle(id) {
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active-view'));
+            document.getElementById(id).classList.add('active-view');
         }
 
-        // --- TODAY PANE DROP LOGIC ---
-        const dropArea = document.getElementById('drop-area');
-        dropArea.onclick = () => { let i = document.createElement('input'); i.type='file'; i.onchange=(e)=>handleTodayFile(e.target.files[0]); i.click(); };
-        dropArea.ondragover = (e) => { e.preventDefault(); dropArea.classList.add('dragover'); };
-        dropArea.ondrop = (e) => { e.preventDefault(); handleTodayFile(e.dataTransfer.files[0]); };
-
-        function handleTodayFile(file) {
-            const ext = file.name.split('.').pop().toLowerCase();
-            if (ext === 'csv') {
-                Papa.parse(file, { header: true, complete: (r) => initToday(r.data) });
-            } else if (ext === 'docx') {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    mammoth.convertToHtml({arrayBuffer: e.target.result}).then(res => {
-                        const temp = document.createElement('div'); temp.innerHTML = res.value;
-                        const rows = Array.from(temp.querySelectorAll('tr'));
-                        const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.innerText.trim().toLowerCase());
-                        const data = rows.slice(1).map(tr => {
-                            const tds = tr.querySelectorAll('td');
-                            let obj = {};
-                            headers.forEach((h, idx) => { if(tds[idx]) obj[h] = tds[idx].innerText.trim(); });
-                            return obj;
-                        });
-                        initToday(data);
-                    });
-                };
-                reader.readAsArrayBuffer(file);
-            }
+        function setTodayTheme(t) {
+            const ts = document.getElementById('today-section');
+            ts.classList.remove('theme-light', 'theme-dark', 'theme-sepia');
+            ts.classList.add('theme-' + t);
         }
 
-        function initToday(data) {
-            dropArea.classList.add('hidden');
-            document.getElementById('today-list-container').classList.remove('hidden');
-            const cleanData = data.map(row => ({ en: row.en || row.EN || '', de: row.de || row.DE || '', fr: row.fr || row.FR || '' }));
-            const hasEN = cleanData.some(r => r.en); const hasDE = cleanData.some(r => r.de); const hasFR = cleanData.some(r => r.fr);
-            
-            todayList = new List('today-section', {
-                valueNames: ['en', 'de', 'fr'],
-                item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td></tr>`
-            }, cleanData);
-
-            toggleTCol('en-t', hasEN); toggleTCol('de-t', hasDE); toggleTCol('fr-t', hasFR);
-            document.querySelector('[data-tcol="en-t"]').checked = hasEN;
-            document.querySelector('[data-tcol="de-t"]').checked = hasDE;
-            document.querySelector('[data-tcol="fr-t"]').checked = hasFR;
+        function toggleDrop(id, e) {
+            e.stopPropagation();
+            const el = document.getElementById(id);
+            const isVis = el.style.display === 'block';
+            document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+            el.style.display = isVis ? 'none' : 'block';
         }
 
-        function toggleDrop(id, e) { e.stopPropagation(); const el = document.getElementById(id); const isVis = el.style.display === 'block'; document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none'); el.style.display = isVis ? 'none' : 'block'; }
         document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
-        document.querySelectorAll('.col-chk').forEach(chk => chk.onchange = () => document.getElementById('main-list').classList.toggle(`hide-${chk.dataset.col}`, !chk.checked));
-        document.querySelectorAll('.t-col-chk').forEach(chk => chk.onchange = () => toggleTCol(chk.dataset.tcol, chk.checked));
-        function toggleTCol(colId, show) { document.getElementById('today-list').classList.toggle(`hide-${colId}`, !show); }
         document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value);
-        document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
-        document.getElementById('main-download-btn').onclick = () => {
-            const csv = Papa.unparse(masterList.visibleItems.map(i => i.values()));
-            const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_filtered.csv"; a.click();
-        };
     </script>
 </body>
 </html>
