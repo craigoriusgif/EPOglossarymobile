@@ -2,21 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Glossearch</title>
-    <link rel="manifest" href="manifest.json">
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js');
-        });
-      }
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>EPO Glossary</title>
     
-    <link rel="apple-touch-icon" href="Magglasslogo.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="list.min.js"></script>
+    <script src="papaparse.min.js"></script>
 
     <style>
         :root {
@@ -32,9 +24,9 @@
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 10px; background-color: var(--primary-bg); color: var(--text-main); overflow-x: hidden; width: 100%; }
 
+        /* --- LANDING PAGE --- */
         #csv-upload-section {
-            max-width: 500px;
-            margin: 60px auto; padding: 40px; background: var(--card-bg);
+            max-width: 500px; margin: 60px auto; padding: 40px; background: var(--card-bg);
             border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
             border: 2px dashed #cbd5e0;
         }
@@ -45,6 +37,7 @@
         #recent-files-area h3 { font-size: 14px; text-transform: uppercase; color: #666; margin: 0 0 10px 0; }
         .recent-item { padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
 
+        /* --- SEARCH INTERFACE --- */
         #search-interface { display: none; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 1400px; margin: 0 auto; min-height: 100vh; position: relative; }
 
         .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 10px; }
@@ -58,24 +51,23 @@
         
         #search-input, #search-input-mobile { width: 100%; height: 40px; padding: 0 40px 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
         
-        .clear-search-btn-class { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: #f1f3f4; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #5f6368; cursor: pointer; z-index: 2; }
+        .clear-search-btn-class { 
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; 
+            background: #f1f3f4; width: 24px; height: 24px; border-radius: 50%; display: flex; 
+            align-items: center; justify-content: center; font-size: 18px; color: #5f6368; cursor: pointer; z-index: 2;
+        }
 
         .btn-group { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
         .btn-ui { height: 40px; padding: 0 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; flex: 1; }
         .download-btn { background: var(--accent-green); color: white; border: none; font-weight: bold; }
         
-        .help-btn { width: 40px; height: 40px; border-radius: 50%; background: #f0f2f5; border: 1px solid #d1d5db; font-weight: bold; font-size: 18px; color: var(--accent-blue); cursor: pointer; flex-shrink: 0; }
-
-        @media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-            .header-with-logo { flex-wrap: wrap; }
-            .header-left { width: 100%; justify-content: center; margin-bottom: 10px; }
-            .header-center-filters { width: 100%; flex-direction: column; gap: 15px; order: 3; margin-top: 10px; padding: 10px 0; border-top: 1px solid var(--border-color); }
-            .search-container { width: 100% !important; flex: none; }
-            .header-center-buttons { width: 100% !important; flex: none; justify-content: center; }
-            .btn-group { width: 100%; justify-content: center; margin-bottom: 10px; order: 2; }
+        .help-btn { 
+            width: 40px; height: 40px; border-radius: 50%; background: #f0f2f5; border: 1px solid #d1d5db; 
+            font-weight: bold; font-size: 18px; color: var(--accent-blue); cursor: pointer; flex-shrink: 0; 
         }
 
         @media screen and (max-width: 767px) {
+            body { padding-top: calc(10px + env(safe-area-inset-top)) !important; }
             .header-with-logo { flex-direction: row; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px; overflow: hidden; }
             .header-left { flex-direction: column; align-items: flex-start; gap: 0; align-self: flex-start; }
             .header-left h2 { font-size: 0.9rem; color: #666; font-weight: 600; margin-top: 8px; }
@@ -85,6 +77,7 @@
             .btn-ui { height: 36px !important; font-size: 10px !important; border-radius: 8px !important; padding: 0 8px !important; }
             .help-btn { width: 36px; height: 36px; font-size: 16px; }
             .category-list-div, .column-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+
             .list-table thead { display: none; }
             .list-table tbody, .list-table tr, .list-table td { display: block; width: 100%; }
             .list-table tr { border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 16px; background: #fff; padding: 14px; cursor: pointer; }
@@ -110,16 +103,16 @@
         .bulb-icon { margin-left: 6px; font-size: 1.1em; }
         #my-list.hide-en .col-en, #my-list.hide-de .col-de, #my-list.hide-fr .col-fr, #my-list.hide-cat .col-cat { display: none !important; }
 
-        .side-panel { position: fixed; top: 0; width: 400px; height: 100%; background: #fff; z-index: 2050; transition: transform 0.3s ease-in-out; padding: 70px 25px; box-sizing: border-box; overflow-y: auto; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        .side-panel { position: fixed; top: 0; width: 400px; height: 100%; background: #fff; z-index: 2050; transition: transform 0.3s ease-in-out; padding: 80px 25px 30px; box-sizing: border-box; overflow-y: auto; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         #detail-panel { right: 0; transform: translateX(100%); }
         #detail-panel.open { transform: translateX(0); }
-        #help-panel { left: 0; transform: translateX(-100%); }
+        #help-panel { right: 0; transform: translateX(100%); }
         #help-panel.open { transform: translateX(0); }
 
         #panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: none; z-index: 1999; backdrop-filter: blur(4px); }
-        .close-panel { position: absolute; top: 20px; right: 20px; background: #f3f4f6; border: none; font-size: 28px; cursor: pointer; border-radius: 50%; width: 48px; height: 48px; }
+        .close-panel { position: absolute; top: calc(30px + env(safe-area-inset-top)); right: 20px; background: #f3f4f6; border: none; font-size: 28px; cursor: pointer; border-radius: 50%; width: 48px; height: 48px; }
         
-        @media screen and (max-width: 767px) { .side-panel { width: 100%; } }
+        @media screen and (max-width: 767px) { .side-panel { width: 100%; padding-top: calc(90px + env(safe-area-inset-top)); } }
 
         .help-step { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
         .help-icon-large { font-size: 2rem; flex-shrink: 0; width: 50px; text-align: center; }
@@ -137,7 +130,6 @@
             <button class="btn-upload">Choose File</button>
             <input type="file" id="csv-file-input" accept=".csv">
         </div>
-       
         <div id="recent-files-area">
             <h3>Recently Used</h3>
             <div id="recent-list"></div>
@@ -147,7 +139,7 @@
     <div id="search-interface">
         <div class="header-with-logo">
             <div class="header-left">
-                <img src="logo2.png" class="logo-img" onerror="this.style.display='none'">
+                <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'">
                 <h2>Glossary</h2>
             </div>
             <div class="header-center-filters">
@@ -173,7 +165,7 @@
             </div>
             <div class="btn-group">
                 <button id="download-csv-btn" class="btn-ui download-btn">📥 Download</button>
-                <button class="btn-ui" onclick="resetToStart()">↻ Load new</button>
+                <button class="btn-ui" onclick="location.reload()">↻ Load new</button>
                 <button class="help-btn" onclick="toggleHelp(true)">?</button>
             </div>
         </div>
@@ -220,10 +212,9 @@
     <div id="help-panel" class="side-panel">
         <button class="close-panel" onclick="toggleHelp(false)">&times;</button>
         <h2>User Guide</h2>
-        <div class="help-step"><div class="help-icon-large">🔍</div><div class="help-text"><h4>Search</h4><p>Filter terms in any language instantly. No need to press Enter. Keyboard users can press Esc (or ⌘ + . on MacOS or iPad) to clear the search bar ready for the next query.</p></div></div>
+        <div class="help-step"><div class="help-icon-large">🔍</div><div class="help-text"><h4>Search</h4><p>Filter terms in any language instantly. Keyboard users can press Esc to clear the search bar.</p></div></div>
         <div class="help-step"><div class="help-icon-large">🏷️</div><div class="help-text"><h4>Categories</h4><p>Narrow results by legal or technical field.</p></div></div>
-        <div class="help-step"><div class="help-icon-large">💡</div><div class="help-text"><h4>Definitions</h4><p>Click rows with a light bulb to see a definition, chemical formula or link.</p></div></div>
-        <div class="help-step"><div class="help-icon-large">⚙️</div><div class="help-text"><h4>Columns</h4><p>Show/hide columns.</p></div></div>
+        <div class="help-step"><div class="help-icon-large">💡</div><div class="help-text"><h4>Definitions</h4><p>Click rows with a light bulb to see a definition or link.</p></div></div>
     </div>
 
     <div id="detail-panel" class="side-panel">
@@ -239,34 +230,25 @@
         let myList;
         const uploadSection = document.getElementById('csv-upload-section');
         const searchInterface = document.getElementById('search-interface');
-        let langCols = [];
+        let langCols = []; 
 
         window.onload = () => {
-            renderRecentFiles();
-        };
-
-        function renderRecentFiles() {
-            const list = document.getElementById('recent-list');
-            list.innerHTML = '';
             const history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
             if(history.length > 0) {
                 document.getElementById('recent-files-area').style.display = 'block';
-                [...history].reverse().forEach(item => {
+                const list = document.getElementById('recent-list');
+                history.reverse().forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'recent-item';
                     div.innerHTML = `<span>📄 ${item.name}</span><small>${item.date}</small>`;
                     div.onclick = () => {
-                        if (item.data.length > 0) {
-                            langCols = Object.keys(item.data[0]).filter(k => k.length === 2);
-                        }
+                        if (item.data.length > 0) langCols = Object.keys(item.data[0]).filter(k => k.length === 2);
                         initApp(item.data);
                     };
                     list.appendChild(div);
                 });
-            } else {
-                document.getElementById('recent-files-area').style.display = 'none';
             }
-        }
+        };
 
         document.getElementById('csv-file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -276,18 +258,11 @@
                 complete: (r) => {
                     const headers = Object.keys(r.data[0] || {});
                     langCols = headers.filter(h => h.length === 2).map(h => h.toLowerCase());
-
                     const clean = r.data.map(row => {
-                        let entry = {
-                            definition: row.Definition || '',
-                            category: row.Category ? row.Category.replace(/[\[\]"]/g, '') : ''
-                        };
-                        headers.filter(h => h.length === 2).forEach(key => {
-                            entry[key.toLowerCase()] = row[key] || '';
-                        });
+                        let entry = { definition: row.Definition || '', category: row.Category ? row.Category.replace(/[\[\]"]/g, '') : '' };
+                        headers.filter(h => h.length === 2).forEach(key => entry[key.toLowerCase()] = row[key] || '');
                         return entry;
                     }).filter(row => Object.values(row).some(v => v !== ''));
-
                     let hist = JSON.parse(localStorage.getItem('glossary_history') || '[]');
                     hist.push({ name: file.name, data: clean, date: new Date().toLocaleDateString() });
                     if(hist.length > 3) hist.shift();
@@ -302,27 +277,14 @@
             searchInterface.style.display = 'block';
             myList = new List('search-interface', {
                 valueNames: ['en', 'de', 'fr', 'category', 'definition'],
-                item: `<tr onclick="openRow(this)">
-                    <td class="en col-en" data-label="EN"></td>
-                    <td class="de col-de" data-label="DE"></td>
-                    <td class="fr col-fr" data-label="FR"></td>
-                    <td class="category col-cat" data-label="CAT"></td>
-                    <td class="definition" style="display:none"></td>
-                </tr>`
+                item: `<tr onclick="openRow(this)"><td class="en col-en" data-label="EN"></td><td class="de col-de" data-label="DE"></td><td class="fr col-fr" data-label="FR"></td><td class="category col-cat" data-label="CAT"></td><td class="definition" style="display:none"></td></tr>`
             }, data);
 
-            if (langCols.length === 0 && data.length > 0) {
-                langCols = Object.keys(data[0]).filter(k => k.length === 2);
-            }
-
             myList.items.forEach(item => {
-                const vals = item.values();
-                if (vals.definition && vals.definition.trim()) {
+                if (item.values().definition?.trim()) {
                     item.elm.classList.add('has-def');
-                    const enField = item.elm.querySelector('.en');
-                    if (enField && !enField.innerHTML.includes('💡')) {
-                        enField.innerHTML += '<span class="bulb-icon">💡</span>';
-                    }
+                    const en = item.elm.querySelector('.en');
+                    if (en && !en.innerHTML.includes('💡')) en.innerHTML += '<span class="bulb-icon">💡</span>';
                 }
             });
 
@@ -333,34 +295,45 @@
                     const div = document.createElement('div');
                     div.style.padding = '12px';
                     div.innerHTML = `<input type="checkbox" value="${c}" id="chk-${c}"> <label for="chk-${c}">${c}</label>`;
+                    
                     div.onclick = (e) => {
                         e.stopPropagation();
                         const cb = div.querySelector('input');
-                        if(e.target !== cb) cb.checked = !cb.checked;
-                        syncCats(c, cb.checked);
+                        if(e.target !== cb && e.target.tagName !== 'LABEL') {
+                            cb.checked = !cb.checked;
+                            syncCats(c, cb.checked);
+                            updateFilters();
+                        }
+                    };
+                    
+                    const actualCb = div.querySelector('input');
+                    actualCb.onclick = (e) => {
+                        e.stopPropagation();
+                        syncCats(c, actualCb.checked);
                         updateFilters();
                     };
+                    
                     listEl.appendChild(div);
                 });
             });
         }
 
-        function resetToStart() {
-            searchInterface.style.display = 'none';
-            uploadSection.style.display = 'block';
-            document.getElementById('csv-file-input').value = '';
-            clearSearchField();
-            renderRecentFiles();
-        }
-
         function syncCats(v, c) { document.querySelectorAll(`.category-list-div input[value="${v}"]`).forEach(i => i.checked = c); }
 
         function updateFilters() {
-            const sel = Array.from(document.querySelector('.category-list-div').querySelectorAll('input:checked')).map(i => i.value);
+            // Get unique selected categories
+            const sel = Array.from(new Set(Array.from(document.querySelectorAll('.category-list-div input:checked')).map(i => i.value)));
+            
             document.querySelectorAll('.badge-area-span').forEach(b => {
                 b.innerHTML = sel.length ? `<div style="display:flex;align-items:center;"><div class="count-badge">${sel.length}</div><span class="reset-link" onclick="resetCats(event)">Reset</span></div>` : '';
             });
-            myList.filter(item => sel.length === 0 || sel.every(s => item.values().category.includes(s)));
+
+            myList.filter(item => {
+                if (sel.length === 0) return true;
+                const itemCat = item.values().category;
+                // OR Logic: Match if the item's category field contains ANY of the selected filter labels
+                return sel.some(s => itemCat.includes(s));
+            });
         }
 
         window.resetCats = (e) => {
@@ -379,14 +352,11 @@
 
         function toggleHelp(show) { document.getElementById('help-panel').classList.toggle('open', show); checkOverlay(); }
         function toggleDetail(show) { document.getElementById('detail-panel').classList.toggle('open', show); checkOverlay(); }
-        
         function checkOverlay() {
             const h = document.getElementById('help-panel').classList.contains('open');
             const d = document.getElementById('detail-panel').classList.contains('open');
             document.getElementById('panel-overlay').style.display = (h || d) ? 'block' : 'none';
-            document.body.style.overflow = (h || d) ? 'hidden' : '';
         }
-
         function closeAllPanels() { toggleHelp(false); toggleDetail(false); }
 
         function linkify(text) {
@@ -396,19 +366,16 @@
 
         function openRow(row) {
             const term = row.querySelector('.en').textContent.replace('💡', '').trim();
-            const match = myList.get('en', term);
-            if (!match.length) return;
-            const item = match[0].values();
+            const match = myList.items.find(i => i.values().en.trim() === term);
+            if (!match) return;
+            const item = match.values();
             document.getElementById('det-en').textContent = item.en;
             document.getElementById('det-de').textContent = item.de || '-';
             document.getElementById('det-fr').textContent = item.fr || '-';
-            const rawDef = item.definition || 'No definition available.';
-            document.getElementById('det-def').innerHTML = linkify(rawDef);
+            document.getElementById('det-def').innerHTML = linkify(item.definition || 'No definition available.');
             toggleDetail(true);
         }
 
-        document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
-        
         const performSearch = (val) => {
             document.getElementById('search-input').value = val;
             document.getElementById('search-input-mobile').value = val;
@@ -417,12 +384,7 @@
 
         document.getElementById('search-input').oninput = (e) => performSearch(e.target.value);
         document.getElementById('search-input-mobile').oninput = (e) => performSearch(e.target.value);
-
-        function clearSearchField() { 
-            document.getElementById('search-input').value = ''; 
-            document.getElementById('search-input-mobile').value = ''; 
-            if(myList) myList.search(); 
-        }
+        function clearSearchField() { performSearch(''); }
 
         document.querySelectorAll('input[data-col]').forEach(chk => {
             chk.onchange = () => {
@@ -432,11 +394,45 @@
             };
         });
 
-        document.getElementById('download-csv-btn').onclick = function() {
-            const csv = Papa.unparse(myList.visibleItems.map(item => item.values()));
-            const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_export.csv"; a.click();
+        document.getElementById('download-csv-btn').onclick = async function() {
+            const csvData = Papa.unparse(myList.visibleItems.map(item => item.values()));
+            const fileName = "Glossary_export.csv";
+            
+            if (window.Capacitor && Capacitor.Plugins.Filesystem) {
+                try {
+                    const { Filesystem, Share } = Capacitor.Plugins;
+                    const result = await Filesystem.writeFile({
+                        path: fileName,
+                        data: csvData,
+                        directory: 'DOCUMENTS',
+                        encoding: 'utf8'
+                    });
+
+                    if (Share) {
+                        await Share.share({
+                            title: 'Export Glossary',
+                            url: result.uri,
+                            dialogTitle: 'Share CSV file'
+                        });
+                    } else {
+                        alert("File saved to Documents: " + fileName);
+                    }
+                } catch (err) {
+                    console.error('Download failed', err);
+                    alert("Export failed: " + err.message);
+                }
+            } else {
+                const blob = new Blob(["\ufeff" + csvData], { type: 'text/csv;charset=utf-8;' });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
         };
+        
+        document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
     </script>
 </body>
 </html>
