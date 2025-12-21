@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPO glossary</title>
+
+    <script src="list.min.js"></script>
+    <script src="papaparse.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+
+        #csv-upload-section, #search-interface {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        #search-interface {
+            display: none; 
+            min-height: 100vh;
+        }
+
+        h1, h2 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .header-with-logo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-left h2 {
+            border-bottom: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .logo-img {
+            height: 50px; 
+            width: auto;
+        }
+
+        .load-new-link {
+            font-size: 0.9em;
+            color: #0066cc;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .load-new-link:hover {
+            color: #004499;
+            text-decoration: underline;
+        }
+
+        .list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .list-table th, .list-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .list-table th {
+            background-color: #f0f0f0;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .sort-info {
+            font-size: 0.75em;
+            color: #888;
+            font-weight: normal;
+            margin-left: 5px;
+        }
+
+        #filter-controls {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            line-height: 1.2;
+            height: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        #search-input {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 36px;
+            box-sizing: border-box;
+        }
+
+        .help-text {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .category-filter-container {
+            position: relative;
+        }
+
+        .category-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        #category-dropdown-btn, #reset-categories-btn {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f9f9f9;
+            height: 36px; 
+            box-sizing: border-box;
+        }
+
+        #category-dropdown-btn {
+            width: 250px; 
+            text-align: left;
+        }
+
+        #category-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            max-height: 250px;
+            width: 250px; 
+            overflow-y: auto;
+            border-radius: 4px;
+            padding: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .category-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .category-option:hover {
+            background-color: #e6e6e6;
+        }
+
+        .category-option label {
+            cursor: pointer;
+            margin: 0;
+            flex: 1;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="csv-upload-section">
+        <h1>EPO glossary</h1>
+        <p>Please select a CSV file to load and display:</p>
+        <input type="file" id="csv-file-input" accept=".csv">
+        <p id="loading-status"></p>
+    </div>
+
+    <div id="search-interface">
+        <div class="header-with-logo">
+            <div class="header-left">
+                <img src="logo.jpg" alt="Logo" class="logo-img">
+                <h2>Search</h2>
+            </div>
+            <a href="javascript:void(0)" class="load-new-link" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+                <span>↑</span> Load new glossary
+            </a>
+        </div>
+
+        <div class="list-controls" id="filter-controls">
+            <div class="control-group">
+                <label for="search-input">Search:</label>
+                <input type="search" id="search-input" class="search" placeholder="Type to search..." autofocus>
+                <span class="help-text">Press Esc to clear</span>
+            </div>
+
+            <div class="control-group">
+                <label>Category:</label>
+                <div class="category-buttons">
+                    <div class="category-filter-container">
+                        <button id="category-dropdown-btn">Click to select...</button>
+                        <div id="category-options"></div>
+                    </div>
+                    <button id="reset-categories-btn">Reset categories</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="my-list">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th class="sort" data-sort="en">EN <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="de">DE <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="fr">FR <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="nl">NL <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="definition">Definition <span class="sort-info">↕ Sort A-Z</span></th>
+                        <th class="sort" data-sort="category">Category <span class="sort-info">↕ Sort A-Z</span></th>
+                    </tr>
+                </thead>
+                <tbody class="list"></tbody>
+            </table>
+            <p class="not-found" style="display:none;">No results found.</p>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('csv-file-input');
+        const loadingStatus = document.getElementById('loading-status');
+        const searchInterface = document.getElementById('search-interface');
+        const searchInput = document.getElementById('search-input');
+        const categoryDropdownBtn = document.getElementById('category-dropdown-btn');
+        const resetCategoriesBtn = document.getElementById('reset-categories-btn');
+        const categoryOptions = document.getElementById('category-options');
+
+        let myList;
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            loadingStatus.textContent = `Loading "${file.name}"...`;
+            const reader = new FileReader();
+            reader.onload = (e) => parseCSV(e.target.result);
+            reader.readAsText(file);
+        }
+
+        function cleanCategoryString(str) {
+            if (!str) return [];
+            return String(str)
+                .replace(/[\[\]"]/g, '') 
+                .split(',')              
+                .map(s => s.trim())      
+                .filter(s => s !== "");  
+        }
+
+        function parseCSV(csvText) {
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    const data = results.data.map(item => {
+                        const newItem = {};
+                        for (const key in item) {
+                            const finalKey = key.trim().toLowerCase(); 
+                            // Added 'nl' to the allowed headers list
+                            if (['en', 'de', 'fr', 'nl', 'definition', 'category'].includes(finalKey)) {
+                                if (finalKey === 'category') {
+                                    newItem[finalKey] = cleanCategoryString(item[key]).join(', ');
+                                } else {
+                                    newItem[finalKey] = item[key];
+                                }
+                            }
+                        }
+                        return newItem;
+                    }).filter(item => item.en);
+
+                    if (data.length > 0) {
+                        initializeListJS(data);
+                        setupCategoryFilter(data);
+                        searchInterface.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            searchInterface.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            searchInput.focus();
+                        }, 100);
+
+                        loadingStatus.textContent = `Loaded ${data.length} records.`;
+                    }
+                }
+            });
+        }
+
+        function initializeListJS(data) {
+            if (myList) myList.destroy();
+            document.querySelector('#my-list .list').innerHTML = '';
+
+            myList = new List('my-list', {
+                valueNames: ['en', 'de', 'fr', 'nl', 'definition', 'category'],
+                item: '<tr><td class="en"></td><td class="de"></td><td class="fr"></td><td class="nl"></td><td class="definition"></td><td class="category"></td></tr>',
+                listClass: 'list',
+                sortFunction: function(itemA, itemB, options) {
+                    let a = itemA.values()[options.valueName] || "";
+                    let b = itemB.values()[options.valueName] || "";
+                    return String(a).localeCompare(String(b), undefined, { sensitivity: 'base', numeric: true });
+                }
+            }, data);
+
+            myList.search('');
+
+            document.querySelectorAll('th.sort').forEach(header => {
+                header.addEventListener('click', function() {
+                    const infoSpan = this.querySelector('.sort-info');
+                    const isAsc = this.classList.contains('asc');
+                    document.querySelectorAll('.sort-info').forEach(s => s.textContent = '↕ Sort A-Z');
+                    infoSpan.textContent = isAsc ? '↕ Sort Z-A' : '↕ Sort A-Z';
+                });
+            });
+        }
+
+        function setupCategoryFilter(data) {
+            categoryOptions.innerHTML = ''; 
+            let allCategories = [];
+            data.forEach(item => {
+                if (item.category) {
+                    allCategories.push(...item.category.split(',').map(s => s.trim()));
+                }
+            });
+
+            const uniqueCategories = [...new Set(allCategories)].sort((a,b) => a.localeCompare(b, undefined, {sensitivity: 'base'}));
+            
+            uniqueCategories.forEach(category => {
+                const div = document.createElement('div');
+                div.className = 'category-option';
+                const checkboxId = `cat-${category.replace(/\s+/g, '-').toLowerCase()}`;
+                div.innerHTML = `<input type="checkbox" id="${checkboxId}" value="${category}">
+                                 <label for="${checkboxId}">${category}</label>`;
+                categoryOptions.appendChild(div);
+                
+                div.addEventListener('click', (e) => {
+                   if(e.target.tagName !== 'INPUT') {
+                       const cb = div.querySelector('input');
+                       cb.checked = !cb.checked;
+                       applyCategoryFilter();
+                   }
+                });
+            });
+            categoryOptions.addEventListener('change', applyCategoryFilter);
+        }
+
+        function applyCategoryFilter() {
+            if (!myList) return;
+            const selected = Array.from(categoryOptions.querySelectorAll('input:checked')).map(cb => cb.value);
+            
+            if (selected.length === 0) {
+                myList.filter();
+                return;
+            }
+
+            myList.filter(item => {
+                const itemCats = String(item.values().category || "").split(',').map(s => s.trim());
+                return selected.every(sCat => itemCats.includes(sCat));
+            });
+        }
+        
+        categoryDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            categoryOptions.style.display = categoryOptions.style.display === 'block' ? 'none' : 'block';
+        });
+
+        resetCategoriesBtn.addEventListener('click', () => {
+            categoryOptions.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            if (myList) myList.filter();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!categoryDropdownBtn.contains(e.target) && !categoryOptions.contains(e.target)) {
+                categoryOptions.style.display = 'none';
+            }
+        });
+
+        searchInput.addEventListener('keyup', () => {
+            if (myList) myList.search(searchInput.value);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                if (myList) myList.search('');
+                searchInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
