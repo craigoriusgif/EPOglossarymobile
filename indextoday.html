@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EPO Glossary Pro</title>
+    <title>EPO Glossary - Pro Mode</title>
     
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
@@ -27,291 +27,280 @@
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
 
-        /* --- LAYOUT STRUCTURE --- */
-        #app-container { display: flex; height: 100vh; width: 100vw; transition: all 0.3s ease; }
+        /* --- LAYOUT --- */
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; }
         
-        /* Main Search Pane */
-        #main-pane { flex: 1; padding: 20px; overflow-y: auto; background: var(--primary-bg); transition: flex 0.3s ease; display: block; }
+        #main-section { flex: 2; padding: 15px; overflow-y: auto; background: var(--primary-bg); border-right: 1px solid var(--border-color); transition: flex 0.3s ease; }
+        #today-section { flex: 1; padding: 15px; overflow-y: auto; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: transform 0.3s ease; }
+
+        .hidden { display: none !important; }
+        .full-width { flex: 1 0 100% !important; border: none !important; }
+
+        /* --- SHARED UI ELEMENTS (From original) --- */
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 10px; }
+        #today-section .header-with-logo { border-bottom-color: #4b5563; }
         
-        /* Today Pane */
-        #today-pane { 
-            width: 33.33%; 
-            background: var(--today-bg); 
-            color: var(--today-text); 
-            padding: 20px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column;
-            border-left: 1px solid #000;
-            transition: transform 0.3s ease, width 0.3s ease;
-        }
+        .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .logo-img { height: 42px; width: auto; }
         
-        /* Hidden States */
-        .pane-hidden { display: none !important; }
-        .full-width { width: 100% !important; flex: none !important; }
-
-        /* --- DROP ZONE --- */
-        #today-drop-zone {
-            border: 2px dashed #636e72;
-            border-radius: 12px;
-            padding: 40px 20px;
-            text-align: center;
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        #today-drop-zone.dragover { background: #3d484d; border-color: var(--accent-blue); }
-
-        /* --- LANDING PAGE --- */
-        #csv-upload-section {
-            max-width: 500px; margin: 60px auto; padding: 40px; background: var(--card-bg);
-            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
-        }
-        .btn-upload { background: var(--accent-blue); color: white; padding: 12px 24px; border-radius: 8px; border: none; font-weight: bold; width: 100%; cursor: pointer; }
-        #csv-file-input { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
-
-        /* --- TABLES & SEARCH --- */
-        .search-container { position: relative; margin-bottom: 15px; }
-        input[type="search"] { width: 100%; height: 40px; padding: 0 40px 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; }
+        .header-center-filters { display: flex; flex-grow: 1; gap: 12px; align-items: center; }
+        .search-container { position: relative; flex: 2; display: flex; align-items: center; }
+        .header-center-buttons { display: flex; flex: 1; gap: 8px; align-items: center; }
         
-        .list-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; color: var(--text-main); }
-        #today-pane .list-table { background: #3d484d; color: white; border-bottom: 1px solid #636e72; }
-        #today-pane .list-table th { background: #4b5563; color: white; }
-        #today-pane .list-table td { border-bottom: 1px solid #636e72; color: #dfe6e9; }
+        input[type="search"] { width: 100%; height: 40px; padding: 0 40px 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
         
-        .list-table th, .list-table td { padding: 12px; text-align: left; font-size: 13px; }
-        .list-table th { background: #f9fafb; cursor: pointer; position: sticky; top: 0; }
+        .btn-ui { height: 40px; padding: 0 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+        #today-section .btn-ui { background: #3d484d; color: white; border-color: #636e72; }
+        
+        .dropdown-container { position: relative; flex: 1; display: flex; }
+        .dropdown-options { position: absolute; top: 45px; background: white; border: 1px solid #d1d5db; z-index: 1000; max-height: 350px; width: 260px; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; color: var(--text-main); }
+        
+        .count-badge { background: var(--accent-blue); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: 6px; }
 
-        /* --- UI CONTROLS --- */
-        .pane-toggle-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 1000; }
-        .btn-toggle { background: #1c1e21; color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; font-size: 12px; opacity: 0.8; }
-        .btn-toggle:hover { opacity: 1; }
+        /* --- TABLES --- */
+        .list-table { width: 100%; border-collapse: collapse; background: white; }
+        #today-section .list-table { background: transparent; }
+        .list-table th, .list-table td { padding: 14px; border-bottom: 1px solid #f3f4f6; text-align: left; }
+        #today-section .list-table td, #today-section .list-table th { border-bottom-color: #4b5563; }
+        .list-table th { background: #f9fafb; cursor: pointer; font-size: 13px; position: sticky; top: 0; }
+        #today-section .list-table th { background: #4b5563; color: white; }
 
-        .bulb-icon { margin-left: 4px; }
+        /* --- TODAY PANE SPECIFICS --- */
+        #drop-area { border: 2px dashed #636e72; border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 20px; cursor: pointer; }
+        #drop-area.dragover { background: #3d484d; border-color: var(--accent-blue); }
 
-        /* --- SIDE PANELS --- */
-        .side-panel { position: fixed; top: 0; right: 0; width: 400px; height: 100%; background: #fff; z-index: 2050; transform: translateX(100%); transition: transform 0.3s ease; padding: 60px 25px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
-        .side-panel.open { transform: translateX(0); }
-        #panel-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; z-index: 1999; }
+        /* Pane Toggles (Bottom Fixed) */
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 10px; }
+        .toggle-btn { background: #1c1e21; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; }
 
-        @media (max-width: 1024px) {
-            #today-pane { width: 100%; display: none; }
-            #main-pane { width: 100%; }
-            #app-container { flex-direction: column; }
-        }
+        /* Column Hiding Logic */
+        #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
+        #today-list.hide-en-t .col-en, #today-list.hide-de-t .col-de, #today-list.hide-fr-t .col-fr { display: none !important; }
+
+        /* Initial Upload Screen */
+        #upload-screen { max-width: 500px; margin: 100px auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <div id="csv-upload-section">
-        <h1>Glossary</h1>
-        <p>Upload the <strong>Master Glossary</strong> to begin.</p>
-        <div class="file-input-wrapper" style="position:relative;">
-            <button class="btn-upload">Choose Master CSV</button>
-            <input type="file" id="csv-file-input" accept=".csv">
+    <div id="upload-screen">
+        <h1>Glossary Pro</h1>
+        <p>Please upload the <strong>Master Glossary CSV</strong> to start.</p>
+        <div style="position:relative;">
+            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white;">Choose File</button>
+            <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
         </div>
     </div>
 
-    <div id="app-container" class="pane-hidden">
-        <div id="main-pane">
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
-                <h2 style="margin:0;">Master Search</h2>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-toggle" onclick="location.reload()">Reset All</button>
+    <div id="app-wrapper" class="hidden">
+        
+        <section id="main-section">
+            <div class="header-with-logo">
+                <div class="header-left">
+                    <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'">
+                    <h2 style="margin:0; font-size: 1.2rem;">Master</h2>
                 </div>
+                <div class="header-center-filters">
+                    <div class="search-container">
+                        <input type="search" id="master-search" placeholder="Search master glossary...">
+                    </div>
+                    <div class="header-center-buttons">
+                        <div class="dropdown-container">
+                            <button class="btn-ui" onclick="toggleDrop('cat-drop', event)">🏷️ Categories <span id="master-cat-badge"></span></button>
+                            <div id="cat-drop" class="dropdown-options"><div id="master-cat-list" style="padding:10px;"></div></div>
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="btn-ui" onclick="toggleDrop('col-drop', event)">⚙️ Columns</button>
+                            <div id="col-drop" class="dropdown-options" style="padding:10px;">
+                                <div><input type="checkbox" checked data-col="en" class="col-chk"> English</div>
+                                <div><input type="checkbox" checked data-col="de" class="col-chk"> German</div>
+                                <div><input type="checkbox" checked data-col="fr" class="col-chk"> French</div>
+                                <div><input type="checkbox" checked data-col="cat" class="col-chk"> Category</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-ui" onclick="location.reload()">↻</button>
             </div>
-            
-            <div id="master-list-wrapper">
-                <div class="search-container">
-                    <input type="search" class="search" id="master-search" placeholder="Search master terms...">
-                </div>
+
+            <div id="main-list">
                 <table class="list-table">
                     <thead>
                         <tr>
-                            <th class="sort" data-sort="en">English</th>
-                            <th class="sort" data-sort="de">German</th>
-                            <th class="sort" data-sort="fr">French</th>
-                            <th class="sort" data-sort="category">Category</th>
+                            <th class="sort col-en" data-sort="en">English</th>
+                            <th class="sort col-de" data-sort="de">German</th>
+                            <th class="sort col-fr" data-sort="fr">French</th>
+                            <th class="sort col-cat" data-sort="category">Category</th>
                         </tr>
                     </thead>
                     <tbody class="list"></tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <div id="today-pane">
-            <h2 style="color:white; margin-top:0;">Today's Case</h2>
-            
-            <div id="today-drop-zone">
-                <div style="font-size: 30px;">📄</div>
-                <p>Drag & Drop Case Vocab<br><small>(CSV or Word Table)</small></p>
-            </div>
-
-            <div id="today-list-wrapper" style="display:none;">
-                <div class="search-container">
-                    <input type="search" class="search" id="today-search" placeholder="Search case vocab...">
+        <section id="today-section">
+            <div class="header-with-logo">
+                <h2 style="margin:0; color:white;">Today's Case</h2>
+                <div class="dropdown-container">
+                    <button class="btn-ui" onclick="toggleDrop('today-col-drop', event)">⚙️ Columns</button>
+                    <div id="today-col-drop" class="dropdown-options" style="padding:10px;">
+                        <div><input type="checkbox" checked data-tcol="en-t" class="t-col-chk"> English</div>
+                        <div><input type="checkbox" checked data-tcol="de-t" class="t-col-chk"> German</div>
+                        <div><input type="checkbox" checked data-tcol="fr-t" class="t-col-chk"> French</div>
+                    </div>
                 </div>
-                <table class="list-table">
-                    <thead>
-                        <tr>
-                            <th class="sort" data-sort="en">EN</th>
-                            <th class="sort" data-sort="de">DE</th>
-                            <th class="sort" data-sort="fr">FR</th>
-                        </tr>
-                    </thead>
-                    <tbody class="list"></tbody>
-                </table>
             </div>
-        </div>
+
+            <div id="drop-area">
+                <div style="font-size: 24px;">📥</div>
+                <p>Drop CSV or Word table here</p>
+            </div>
+
+            <div id="today-list-container" class="hidden">
+                <div class="search-container" style="margin-bottom:15px;">
+                    <input type="search" id="today-search" placeholder="Search case vocab...">
+                </div>
+                <div id="today-list">
+                    <table class="list-table">
+                        <thead>
+                            <tr>
+                                <th class="sort col-en" data-sort="en">EN</th>
+                                <th class="sort col-de" data-sort="de">DE</th>
+                                <th class="sort col-fr" data-sort="fr">FR</th>
+                            </tr>
+                        </thead>
+                        <tbody class="list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <div class="pane-toggle-bar" id="ui-toggles" style="display:none;">
-        <button class="btn-toggle" onclick="togglePane('main')">Toggle Master</button>
-        <button class="btn-toggle" onclick="togglePane('today')">Toggle Today</button>
-    </div>
-
-    <div id="panel-overlay" onclick="closeDetail()"></div>
-    <div id="detail-panel" class="side-panel">
-        <button onclick="closeDetail()" style="float:right;">Close</button>
-        <h2 id="det-en" style="color:var(--accent-blue);">Term</h2>
-        <hr>
-        <h4>Definition</h4>
-        <p id="det-def">-</p>
-        <h4>DE</h4>
-        <p id="det-de">-</p>
-        <h4>FR</h4>
-        <p id="det-fr">-</p>
+    <div class="pane-controls">
+        <button class="toggle-btn" onclick="viewMode('master')">Main Only</button>
+        <button class="toggle-btn" onclick="viewMode('split')">Split View</button>
+        <button class="toggle-btn" onclick="viewMode('today')">Today Only</button>
     </div>
 
     <script>
         let masterList, todayList;
-        const mainPane = document.getElementById('main-pane');
-        const todayPane = document.getElementById('today-pane');
-        const dropZone = document.getElementById('today-drop-zone');
+        const mainSec = document.getElementById('main-section');
+        const todaySec = document.getElementById('today-section');
 
-        // --- FILE HANDLING ---
-        document.getElementById('csv-file-input').onchange = (e) => {
+        // --- MASTER UPLOAD ---
+        document.getElementById('master-file-input').onchange = (e) => {
             const file = e.target.files[0];
-            if (!file) return;
             Papa.parse(file, {
                 header: true, skipEmptyLines: true,
-                complete: (r) => initMaster(r.data)
+                complete: (r) => {
+                    document.getElementById('upload-screen').classList.add('hidden');
+                    document.getElementById('app-wrapper').classList.remove('hidden');
+                    initMasterList(r.data);
+                }
             });
         };
 
-        // --- DRAG & DROP ---
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-        dropZone.ondrop = (e) => {
+        function initMasterList(data) {
+            masterList = new List('main-section', {
+                valueNames: ['en', 'de', 'fr', 'category'],
+                item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td><td class="category col-cat"></td></tr>`
+            }, data);
+
+            // Init Categories (Same as original index.html logic)
+            const cats = [...new Set(data.flatMap(i => (i.Category || i.category || '').split(',').map(s => s.trim())))].filter(s => s).sort();
+            const listEl = document.getElementById('master-cat-list');
+            cats.forEach(c => {
+                const div = document.createElement('div');
+                div.innerHTML = `<input type="checkbox" value="${c}" class="cat-filter-chk"> ${c}`;
+                div.onclick = (e) => {
+                    const cb = div.querySelector('input');
+                    if(e.target !== cb) cb.checked = !cb.checked;
+                    updateFilters();
+                };
+                listEl.appendChild(div);
+            });
+        }
+
+        function updateFilters() {
+            const sel = Array.from(document.querySelectorAll('.cat-filter-chk:checked')).map(i => i.value);
+            document.getElementById('master-cat-badge').innerHTML = sel.length ? `<div class="count-badge">${sel.length}</div>` : '';
+            masterList.filter(item => sel.length === 0 || sel.every(s => item.values().category.includes(s)));
+        }
+
+        // --- TODAY PANE LOGIC ---
+        const dropArea = document.getElementById('drop-area');
+        dropArea.ondragover = (e) => { e.preventDefault(); dropArea.classList.add('dragover'); };
+        dropArea.ondragleave = () => dropArea.classList.remove('dragover');
+        dropArea.ondrop = (e) => {
             e.preventDefault();
-            dropZone.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
             handleTodayFile(file);
-        };
-        dropZone.onclick = () => {
-            let input = document.createElement('input');
-            input.type = 'file';
-            input.accept = ".csv,.docx";
-            input.onchange = (e) => handleTodayFile(e.target.files[0]);
-            input.click();
         };
 
         function handleTodayFile(file) {
             const ext = file.name.split('.').pop().toLowerCase();
             if (ext === 'csv') {
-                Papa.parse(file, {
-                    header: true, skipEmptyLines: true,
-                    complete: (r) => initToday(r.data)
-                });
+                Papa.parse(file, { header: true, complete: (r) => initTodayList(r.data) });
             } else if (ext === 'docx') {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    mammoth.convertToHtml({arrayBuffer: e.target.result})
-                    .then(result => {
-                        const div = document.createElement('div');
-                        div.innerHTML = result.value;
-                        const rows = Array.from(div.querySelectorAll('tr'));
-                        if (rows.length < 2) return;
-                        
-                        const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.innerText.trim().toUpperCase());
-                        const data = rows.slice(1).map(row => {
-                            const cells = row.querySelectorAll('td');
-                            let entry = {};
-                            headers.forEach((h, i) => {
-                                if (cells[i]) entry[h.toLowerCase()] = cells[i].innerText.trim();
-                            });
-                            return entry;
+                    mammoth.convertToHtml({arrayBuffer: e.target.result}).then(res => {
+                        const temp = document.createElement('div'); temp.innerHTML = res.value;
+                        const rows = Array.from(temp.querySelectorAll('tr'));
+                        const data = rows.slice(1).map(tr => {
+                            const tds = tr.querySelectorAll('td');
+                            return { en: tds[0]?.innerText, de: tds[1]?.innerText, fr: tds[2]?.innerText };
                         });
-                        initToday(data);
+                        initTodayList(data);
                     });
                 };
                 reader.readAsArrayBuffer(file);
             }
         }
 
-        // --- INIT LISTS ---
-        function initMaster(data) {
-            document.getElementById('csv-upload-section').style.display = 'none';
-            document.getElementById('app-container').classList.remove('pane-hidden');
-            document.getElementById('ui-toggles').style.display = 'flex';
-
-            masterList = new List('master-list-wrapper', {
-                valueNames: ['en', 'de', 'fr', 'category', 'definition'],
-                item: `<tr onclick="openRow(this, 'master')">
-                    <td class="en"></td><td class="de"></td><td class="fr"></td><td class="category"></td>
-                    <td class="definition" style="display:none"></td>
-                </tr>`
-            }, data);
-            
-            // Add bulbs for definitions
-            masterList.items.forEach(item => {
-                if (item.values().definition) {
-                    item.elm.querySelector('.en').innerHTML += ' <span class="bulb-icon">💡</span>';
-                }
-            });
-        }
-
-        function initToday(data) {
-            dropZone.style.display = 'none';
-            document.getElementById('today-list-wrapper').style.display = 'block';
-
-            todayList = new List('today-list-wrapper', {
-                valueNames: ['en', 'de', 'fr', 'definition'],
-                item: `<tr onclick="openRow(this, 'today')">
-                    <td class="en"></td><td class="de"></td><td class="fr"></td>
-                    <td class="definition" style="display:none"></td>
-                </tr>`
+        function initTodayList(data) {
+            dropArea.classList.add('hidden');
+            document.getElementById('today-list-container').classList.remove('hidden');
+            todayList = new List('today-section', {
+                valueNames: ['en', 'de', 'fr'],
+                item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td></tr>`
             }, data);
         }
 
-        // --- UI LOGIC ---
-        function togglePane(pane) {
-            if (pane === 'main') {
-                mainPane.classList.toggle('pane-hidden');
-                todayPane.classList.toggle('full-width', mainPane.classList.contains('pane-hidden'));
-            } else {
-                todayPane.classList.toggle('pane-hidden');
-            }
+        // --- UI HELPERS ---
+        function toggleDrop(id, e) {
+            e.stopPropagation();
+            const el = document.getElementById(id);
+            const isVis = el.style.display === 'block';
+            document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+            el.style.display = isVis ? 'none' : 'block';
         }
 
-        function openRow(rowEl, listType) {
-            const list = listType === 'master' ? masterList : todayList;
-            const term = rowEl.querySelector('.en').textContent.replace('💡', '').trim();
-            const item = list.get('en', term)[0].values();
+        document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
 
-            document.getElementById('det-en').textContent = item.en;
-            document.getElementById('det-de').textContent = item.de || '-';
-            document.getElementById('det-fr').textContent = item.fr || '-';
-            document.getElementById('det-def').textContent = item.definition || 'No definition.';
-            
-            document.getElementById('detail-panel').classList.add('open');
-            document.getElementById('panel-overlay').style.display = 'block';
+        // Master Column Toggles
+        document.querySelectorAll('.col-chk').forEach(chk => {
+            chk.onchange = () => {
+                document.getElementById('main-list').classList.toggle(`hide-${chk.dataset.col}`, !chk.checked);
+            };
+        });
+
+        // Today Column Toggles
+        document.querySelectorAll('.t-col-chk').forEach(chk => {
+            chk.onchange = () => {
+                document.getElementById('today-list').classList.toggle(`hide-${chk.dataset.tcol}`, !chk.checked);
+            };
+        });
+
+        function viewMode(mode) {
+            mainSec.classList.remove('hidden', 'full-width');
+            todaySec.classList.remove('hidden', 'full-width');
+            if(mode === 'master') { todaySec.classList.add('hidden'); mainSec.classList.add('full-width'); }
+            if(mode === 'today') { mainSec.classList.add('hidden'); todaySec.classList.add('full-width'); }
         }
 
-        function closeDetail() {
-            document.getElementById('detail-panel').classList.remove('open');
-            document.getElementById('panel-overlay').style.display = 'none';
-        }
+        document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value);
+        document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
     </script>
 </body>
 </html>
