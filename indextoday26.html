@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EPO Glossary - Pro Mode</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --today-bg: #2d3436;
+            --today-text: #dfe6e9;
+            --border-color: #e4e6eb;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --text-main: #1c1e21;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; position: relative; }
+        
+        /* Fixed clipping: ensure main section shrinks/grows correctly without being hidden */
+        #main-section { flex: 1.8; padding: 15px; overflow: hidden; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; min-width: 0; }
+        #today-section { flex: 1.2; padding: 15px; overflow: hidden; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: all 0.3s ease; min-width: 340px; }
+
+        #today-section.theme-light { background: #ffffff !important; color: #1c1e21 !important; }
+        #today-section.theme-dark { background: #2d3436 !important; color: #dfe6e9 !important; }
+        #today-section.theme-sepia { background: #f4ecd8 !important; color: #5b4636 !important; }
+
+        .hidden { display: none !important; }
+        .full-width { flex: 1 0 100% !important; border: none !important; }
+
+        /* Tablet Optimized Header */
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 8px; flex-shrink: 0; }
+        .header-center-filters { display: flex; flex-grow: 1; gap: 6px; align-items: center; min-width: 0; }
+        input[type="search"] { height: 38px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; outline: none; width: 100%; }
+        
+        .btn-ui { height: 38px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; color: #1c1e21; font-weight: 500; }
+        
+        /* Relocated Theme Toggles for Tablet/Mobile */
+        .today-header-top { display: flex; align-items: center; gap: 5px; margin-bottom: 10px; width: 100%; }
+        .theme-switcher-inline { display: flex; gap: 6px; margin-left: auto; align-items: center; padding-left: 5px; }
+        .theme-dot { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(128,128,128,0.5); padding: 0; }
+
+        /* Today Pane Logic */
+        .today-sticky-header { position: sticky; top: 0; z-index: 100; background: inherit; padding-bottom: 10px; }
+        #today-scroll-area { overflow-y: auto; flex-grow: 1; }
+
+        .list-table { width: 100%; border-collapse: collapse; background: white; }
+        #today-section .list-table { background: transparent; color: inherit; }
+        .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); font-size: 13px; }
+
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 3000; display: flex; gap: 10px; background: rgba(255,255,255,0.95); padding: 10px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid var(--border-color); }
+        
+        /* Recently Used */
+        .recent-item { padding: 12px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+    <div id="upload-screen" style="max-width: 450px; margin: 10vh auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <h1>Glossary Pro</h1>
+        <div style="position:relative; margin-bottom: 20px;">
+            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white; height:50px;">Load Master CSV</button>
+            <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+        </div>
+        <div id="recent-container" class="hidden" style="text-align: left; margin-top: 20px;">
+            <h4 style="color:#666; border-bottom:1px solid #eee; padding-bottom:5px;">Recently Used</h4>
+            <div id="recent-items"></div>
+        </div>
+    </div>
+
+    <div id="app-wrapper" class="hidden">
+        <section id="main-section">
+            <div class="header-with-logo">
+                <h3 style="margin:0;">Glossary</h3>
+                <div class="header-center-filters">
+                    <input type="search" id="master-search" placeholder="Search master list...">
+                    <button class="btn-ui" onclick="location.reload()">🔄</button>
+                    <button class="btn-ui" onclick="downloadMaster()">📥</button>
+                </div>
+            </div>
+            <div id="main-scroll-area" style="flex-grow:1; overflow-y:auto;">
+                <table class="list-table"><tbody class="list"></tbody></table>
+            </div>
+        </section>
+
+        <section id="today-section" class="theme-dark">
+            <div class="today-header-top">
+                <select id="header-select" style="height:30px; font-size:11px; width: 85px; background:rgba(0,0,0,0.2); color:inherit; border:1px solid #666; border-radius:4px;"></select>
+                <button onclick="addMetaRow()" class="btn-ui" style="height:30px; width:30px; padding:0; background:rgba(255,255,255,0.1); color:inherit;">+</button>
+                <button onclick="togglePatentInfo()" class="btn-ui" style="height:30px; font-size:10px; padding:0 8px; background:rgba(255,255,255,0.1); color:inherit;">Hide ▴</button>
+                
+                <div class="theme-switcher-inline">
+                    <button class="theme-dot" onclick="setTheme('light')" style="background:#fff;"></button>
+                    <button class="theme-dot" onclick="setTheme('dark')" style="background:#2d3436;"></button>
+                    <button class="theme-dot" onclick="setTheme('sepia')" style="background:#f4ecd8;"></button>
+                </div>
+            </div>
+
+            <div id="patent-table-content" class="today-header-container">
+                <table style="width:100%; font-size:12px;" id="meta-table-body"></table>
+            </div>
+
+            <div id="drop-area" style="border:2px dashed #888; padding:20px; text-align:center; cursor:pointer; border-radius:8px; margin-bottom:15px;">Drop Case File</div>
+
+            <div id="today-list-container" class="hidden">
+                <div class="today-sticky-header">
+                    <div style="display:flex; gap:8px; margin-bottom:10px;">
+                        <input type="search" id="today-search" style="flex:1; padding:10px; border-radius:6px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(128,128,128,0.3);" placeholder="Filter today's terms... Tap to pin terms">
+                        <button onclick="addNewTerm()" class="btn-ui" style="background:var(--accent-blue); color:white; border:none;">+ Add</button>
+                    </div>
+                    <div id="today-pinned-area" class="hidden"><table class="list-table"><tbody id="pinned-body"></tbody></table></div>
+                </div>
+                <div id="today-scroll-area">
+                    <table class="list-table"><tbody id="today-body" class="list"></tbody></table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="pane-controls">
+        <button class="btn-ui" onclick="setLayout('split')">Split</button>
+        <button class="btn-ui" onclick="setLayout('master')">Main</button>
+        <button class="btn-ui" onclick="setLayout('today')">Today</button>
+    </div>
+
+    <script>
+        let masterList, todayList, pinnedItems = [];
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+            if (history.length > 0) {
+                document.getElementById('recent-container').classList.remove('hidden');
+                const itemsDiv = document.getElementById('recent-items');
+                itemsDiv.innerHTML = '';
+                history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'recent-item';
+                    div.innerHTML = `<span>📄 ${item.name}</span><span style="font-size:10px; color:#999;">${item.date}</span>`;
+                    div.onclick = () => launchApp(item.data);
+                    itemsDiv.appendChild(div);
+                });
+            }
+        }
+
+        function saveToHistory(name, data) {
+            let history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+            const newItem = { name, data, date: new Date().toLocaleDateString() };
+            history = [newItem, ...history.filter(h => h.name !== name)].slice(0, 5);
+            localStorage.setItem('glossary_history', JSON.stringify(history));
+        }
+
+        document.getElementById('master-file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: (r) => {
+                    const data = r.data.map(row => ({ en: row.EN || '', de: row.DE || '', fr: row.FR || '' }));
+                    saveToHistory(file.name, data);
+                    launchApp(data);
+                }
+            });
+        };
+
+        function launchApp(data) {
+            document.getElementById('upload-screen').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            masterList = new List('main-section', { valueNames: ['en', 'de', 'fr'], item: '<tr><td class="en"></td><td class="de"></td><td class="fr"></td></tr>' }, data);
+        }
+
+        function setLayout(mode) {
+            const m = document.getElementById('main-section'), t = document.getElementById('today-section');
+            m.classList.remove('hidden', 'full-width'); t.classList.remove('hidden', 'full-width');
+            if(mode === 'master') { t.classList.add('hidden'); m.classList.add('full-width'); }
+            if(mode === 'today') { m.classList.add('hidden'); t.classList.add('full-width'); }
+        }
+
+        function setTheme(t) { document.getElementById('today-section').className = 'theme-' + t; }
+
+        function togglePin(row) {
+            const item = { en: row.querySelector('.en').textContent, de: row.querySelector('.de').textContent, fr: row.querySelector('.fr').textContent };
+            pinnedItems.push(item);
+            renderPinned();
+        }
+
+        function renderPinned() {
+            const body = document.getElementById('pinned-body');
+            body.innerHTML = '';
+            document.getElementById('today-pinned-area').classList.toggle('hidden', !pinnedItems.length);
+            pinnedItems.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="background:rgba(0,102,204,0.1)">📌 ${item.en}</td><td>${item.de}</td><td>${item.fr}</td>`;
+                tr.onclick = () => { pinnedItems.splice(idx, 1); renderPinned(); };
+                body.appendChild(tr);
+            });
+        }
+
+        window.onload = loadHistory;
+        document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value);
+    </script>
+</body>
+</html>
