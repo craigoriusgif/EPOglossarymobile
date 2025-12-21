@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EPO Glossary - Pro Mode</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --today-bg: #2d3436;
+            --today-text: #dfe6e9;
+            --border-color: #e4e6eb;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --text-main: #1c1e21;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; }
+        #main-section { flex: 2; padding: 15px; overflow: hidden; background: var(--primary-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        #today-section { flex: 1.5; padding: 15px; overflow: hidden; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; }
+
+        #today-section.theme-light { background: #ffffff; color: #1c1e21; }
+        #today-section.theme-dark { background: #2d3436; color: #dfe6e9; }
+
+        .hidden { display: none !important; }
+        .full-width { flex: 1 0 100% !important; border: none !important; }
+
+        /* Case Law Button Style */
+        .btn-caselaw { 
+            background: white !important; 
+            color: black !important; 
+            border: 3px solid black !important; 
+            font-weight: 900 !important;
+            text-transform: uppercase;
+        }
+
+        /* Metadata Table Style */
+        .case-data-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 15px; 
+            font-size: 12px; 
+            background: rgba(255,255,255,0.05);
+        }
+        .case-data-table td { 
+            padding: 6px; 
+            border: 1px solid rgba(128,128,128,0.3); 
+        }
+        .label-cell { font-weight: bold; width: 120px; color: #3498db; }
+        
+        select.lang-select {
+            background: #444;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        /* Generic Table Styles */
+        .list-table { width: 100%; border-collapse: collapse; }
+        .list-table th, .list-table td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(128,128,128,0.2); }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .btn-ui { height: 36px; padding: 0 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; }
+
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 100; display: flex; gap: 8px; }
+        .toggle-btn { padding: 8px 15px; border-radius: 20px; background: #333; color: white; border: none; cursor: pointer; font-size: 11px; }
+        
+        #drop-area { border: 2px dashed #666; padding: 30px; text-align: center; border-radius: 10px; margin-bottom: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+        <section id="main-section">
+            <div class="header-row">
+                <h2 id="main-title">Master Glossary</h2>
+                <div style="display:flex; gap:10px;">
+                    <input type="search" id="master-search" placeholder="Search Master...">
+                    <button class="btn-ui btn-caselaw" onclick="showLegal('https://www.epo.org/en/legal/case-law', 'Case Law')">Case Law</button>
+                </div>
+            </div>
+            <div id="main-content" style="flex-grow:1; overflow-y:auto;">
+                <div id="main-list-div">
+                    <table class="list-table">
+                        <thead><tr><th>EN</th><th>DE</th><th>FR</th><th>Cat</th></tr></thead>
+                        <tbody class="list"></tbody>
+                    </table>
+                </div>
+                <iframe id="legal-frame" class="hidden" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+        </section>
+
+        <section id="today-section">
+            <div id="drop-area">Click or Drop CSV/Word Case File here</div>
+            
+            <div id="case-header-display" class="hidden">
+                <table class="case-data-table" id="metadata-table">
+                    </table>
+            </div>
+
+            <div id="today-list-container" class="hidden" style="flex-grow:1; overflow-y:auto;">
+                <input type="search" id="today-search" placeholder="Filter terms..." style="width:100%; margin-bottom:10px; padding:8px;">
+                <table class="list-table">
+                    <tbody id="today-body" class="list"></tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top:auto; font-size:10px; text-align:center; opacity:0.5;">
+                Pinned instructions: Click a term to pin it to top.
+            </div>
+        </section>
+    </div>
+
+    <div class="pane-controls">
+        <button class="toggle-btn" onclick="setLayout('split')">Split</button>
+        <button class="toggle-btn" onclick="setLayout('master')">Master Only</button>
+        <button class="toggle-btn" onclick="setLayout('today')">Today Only</button>
+    </div>
+
+    <script>
+        let masterList, todayList;
+
+        // --- FILE HANDLING ---
+        const dropArea = document.getElementById('drop-area');
+        dropArea.onclick = () => { let i = document.createElement('input'); i.type='file'; i.onchange=(e)=>processFile(e.target.files[0]); i.click(); };
+
+        function processFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'csv') Papa.parse(file, { header: false, complete: (r) => parseData(r.data) });
+            else if (ext === 'docx') {
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    mammoth.convertToHtml({arrayBuffer: e.target.result}).then(res => {
+                        let temp = document.createElement('div'); temp.innerHTML = res.value;
+                        let rows = Array.from(temp.querySelectorAll('tr')).map(tr => 
+                            Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim())
+                        );
+                        parseData(rows);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function parseData(rows) {
+            let metadata = [];
+            let glossary = [];
+            
+            // Keywords to identify metadata rows
+            const tags = ['#PATENTNUMBER', '#APPNUMBER', '#TITLE', '#PROPRIETOR', '#OPPONENT', '#RESPONDENT', '#APPELLANT'];
+
+            rows.forEach(row => {
+                if(!row[0]) return;
+                let upper = row[0].toUpperCase();
+                let foundTag = tags.find(t => upper.includes(t));
+                
+                if (foundTag) {
+                    metadata.push({ label: row[0].replace('#', ''), value: row[1] || '', lang: row[2] || 'EN' });
+                } else {
+                    glossary.push({ en: row[0], de: row[1] || '', fr: row[2] || '' });
+                }
+            });
+
+            renderMetadata(metadata);
+            initTodayList(glossary);
+            dropArea.classList.add('hidden');
+        }
+
+        function renderMetadata(data) {
+            const table = document.getElementById('metadata-table');
+            const container = document.getElementById('case-header-display');
+            table.innerHTML = '';
+            container.classList.remove('hidden');
+
+            data.forEach(item => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="label-cell">${item.label}</td>
+                    <td>${item.value}</td>
+                    <td style="width:60px;">
+                        <select class="lang-select">
+                            <option value="EN" ${item.lang=='EN'?'selected':''}>EN</option>
+                            <option value="DE" ${item.lang=='DE'?'selected':''}>DE</option>
+                            <option value="FR" ${item.lang=='FR'?'selected':''}>FR</option>
+                            <option value="Other" ${item.lang=='Other'?'selected':''}>Other</option>
+                            <option value="None" ${item.lang=='None'?'selected':''}>-</option>
+                        </select>
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
+        }
+
+        function initTodayList(data) {
+            document.getElementById('today-list-container').classList.remove('hidden');
+            todayList = new List('today-section', {
+                valueNames: ['en', 'de', 'fr'],
+                item: `<tr><td class="en"></td><td class="de"></td><td class="fr"></td></tr>`
+            }, data);
+        }
+
+        // --- UI HELPERS ---
+        function setLayout(mode) {
+            const main = document.getElementById('main-section'), today = document.getElementById('today-section');
+            main.classList.remove('hidden', 'full-width');
+            today.classList.remove('hidden', 'full-width');
+            if(mode==='master') { today.classList.add('hidden'); main.classList.add('full-width'); }
+            if(mode==='today') { main.classList.add('hidden'); today.classList.add('full-width'); }
+        }
+
+        function showLegal(url, title) {
+            const frame = document.getElementById('legal-frame');
+            const list = document.getElementById('main-list-div');
+            if(frame.classList.contains('hidden')) {
+                frame.src = url;
+                frame.classList.remove('hidden');
+                list.classList.add('hidden');
+            } else {
+                frame.classList.add('hidden');
+                list.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
