@@ -29,17 +29,14 @@
 
         /* --- LAYOUT --- */
         #app-wrapper { display: flex; height: 100vh; width: 100vw; }
-        
-        #main-section { flex: 2; padding: 15px; overflow-y: auto; background: var(--primary-bg); border-right: 1px solid var(--border-color); transition: flex 0.3s ease; }
-        #today-section { flex: 1; padding: 15px; overflow-y: auto; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: transform 0.3s ease; }
+        #main-section { flex: 2; padding: 20px; overflow-y: auto; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; }
+        #today-section { flex: 1; padding: 20px; overflow-y: auto; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; }
 
         .hidden { display: none !important; }
         .full-width { flex: 1 0 100% !important; border: none !important; }
 
-        /* --- SHARED UI ELEMENTS (From original) --- */
+        /* --- SHARED UI (INDEX.HTML STYLE) --- */
         .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 10px; }
-        #today-section .header-with-logo { border-bottom-color: #4b5563; }
-        
         .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .logo-img { height: 42px; width: auto; }
         
@@ -47,9 +44,11 @@
         .search-container { position: relative; flex: 2; display: flex; align-items: center; }
         .header-center-buttons { display: flex; flex: 1; gap: 8px; align-items: center; }
         
-        input[type="search"] { width: 100%; height: 40px; padding: 0 40px 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
+        input[type="search"] { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
         
         .btn-ui { height: 40px; padding: 0 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+        .download-btn { background: var(--accent-green); color: white; border: none; font-weight: bold; }
+        
         #today-section .btn-ui { background: #3d484d; color: white; border-color: #636e72; }
         
         .dropdown-container { position: relative; flex: 1; display: flex; }
@@ -65,30 +64,36 @@
         .list-table th { background: #f9fafb; cursor: pointer; font-size: 13px; position: sticky; top: 0; }
         #today-section .list-table th { background: #4b5563; color: white; }
 
-        /* --- TODAY PANE SPECIFICS --- */
-        #drop-area { border: 2px dashed #636e72; border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 20px; cursor: pointer; }
+        /* Today Pane Drop Zone */
+        #drop-area { border: 2px dashed #636e72; border-radius: 12px; padding: 40px 20px; text-align: center; margin-top: 20px; cursor: pointer; }
         #drop-area.dragover { background: #3d484d; border-color: var(--accent-blue); }
 
-        /* Pane Toggles (Bottom Fixed) */
-        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 10px; }
-        .toggle-btn { background: #1c1e21; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        /* Navigation Toggles */
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 8px; }
+        .toggle-btn { background: #1c1e21; color: white; border: none; padding: 10px 16px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 600; opacity: 0.9; }
+        .toggle-btn:hover { opacity: 1; transform: translateY(-1px); }
 
-        /* Column Hiding Logic */
+        /* Initial Screen */
+        #upload-screen { max-width: 500px; margin: 100px auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .recent-item { padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-top: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; }
+
+        /* Column Visibility */
         #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
         #today-list.hide-en-t .col-en, #today-list.hide-de-t .col-de, #today-list.hide-fr-t .col-fr { display: none !important; }
-
-        /* Initial Upload Screen */
-        #upload-screen { max-width: 500px; margin: 100px auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
     <div id="upload-screen">
         <h1>Glossary Pro</h1>
-        <p>Please upload the <strong>Master Glossary CSV</strong> to start.</p>
-        <div style="position:relative;">
-            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white;">Choose File</button>
+        <p>Upload the <strong>Master CSV</strong> to enable split-view.</p>
+        <div style="position:relative; margin-bottom: 20px;">
+            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white; font-weight:bold;">Choose Master File</button>
             <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+        </div>
+        <div id="recent-area" class="hidden">
+            <h3 style="font-size: 12px; text-transform: uppercase; color: #666; text-align: left;">Recently Used</h3>
+            <div id="recent-list"></div>
         </div>
     </div>
 
@@ -98,11 +103,11 @@
             <div class="header-with-logo">
                 <div class="header-left">
                     <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'">
-                    <h2 style="margin:0; font-size: 1.2rem;">Master</h2>
+                    <h2 style="margin:0;">Glossary</h2>
                 </div>
                 <div class="header-center-filters">
                     <div class="search-container">
-                        <input type="search" id="master-search" placeholder="Search master glossary...">
+                        <input type="search" id="master-search" placeholder="Search terms...">
                     </div>
                     <div class="header-center-buttons">
                         <div class="dropdown-container">
@@ -120,7 +125,10 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-ui" onclick="location.reload()">↻</button>
+                <div style="display:flex; gap:8px;">
+                    <button id="main-download-btn" class="btn-ui download-btn">📥 Download</button>
+                    <button class="btn-ui" onclick="location.reload()">↻</button>
+                </div>
             </div>
 
             <div id="main-list">
@@ -139,26 +147,26 @@
         </section>
 
         <section id="today-section">
-            <div class="header-with-logo">
+            <div class="header-with-logo" style="border-bottom-color: #4b5563;">
                 <h2 style="margin:0; color:white;">Today's Case</h2>
-                <div class="dropdown-container">
+                <div class="dropdown-container" id="today-col-container">
                     <button class="btn-ui" onclick="toggleDrop('today-col-drop', event)">⚙️ Columns</button>
                     <div id="today-col-drop" class="dropdown-options" style="padding:10px;">
-                        <div><input type="checkbox" checked data-tcol="en-t" class="t-col-chk"> English</div>
-                        <div><input type="checkbox" checked data-tcol="de-t" class="t-col-chk"> German</div>
-                        <div><input type="checkbox" checked data-tcol="fr-t" class="t-col-chk"> French</div>
+                        <div><input type="checkbox" checked data-tcol="en-t" class="t-col-chk"> EN</div>
+                        <div><input type="checkbox" checked data-tcol="de-t" class="t-col-chk"> DE</div>
+                        <div><input type="checkbox" checked data-tcol="fr-t" class="t-col-chk"> FR</div>
                     </div>
                 </div>
             </div>
 
             <div id="drop-area">
-                <div style="font-size: 24px;">📥</div>
-                <p>Drop CSV or Word table here</p>
+                <div style="font-size: 32px;">📄</div>
+                <p>Drag & Drop Case Vocab<br><small>(CSV or Word Table)</small></p>
             </div>
 
             <div id="today-list-container" class="hidden">
                 <div class="search-container" style="margin-bottom:15px;">
-                    <input type="search" id="today-search" placeholder="Search case vocab...">
+                    <input type="search" id="today-search" placeholder="Search case terms...">
                 </div>
                 <div id="today-list">
                     <table class="list-table">
@@ -177,9 +185,9 @@
     </div>
 
     <div class="pane-controls">
-        <button class="toggle-btn" onclick="viewMode('master')">Main Only</button>
-        <button class="toggle-btn" onclick="viewMode('split')">Split View</button>
-        <button class="toggle-btn" onclick="viewMode('today')">Today Only</button>
+        <button class="toggle-btn" onclick="setView('master')">Main Only</button>
+        <button class="toggle-btn" onclick="setView('split')">Split View</button>
+        <button class="toggle-btn" onclick="setView('today')">Today Only</button>
     </div>
 
     <script>
@@ -187,84 +195,136 @@
         const mainSec = document.getElementById('main-section');
         const todaySec = document.getElementById('today-section');
 
-        // --- MASTER UPLOAD ---
+        // History handling (Matching index.html)
+        window.onload = () => {
+            const history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+            if(history.length > 0) {
+                document.getElementById('recent-area').classList.remove('hidden');
+                const list = document.getElementById('recent-list');
+                history.reverse().forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'recent-item';
+                    div.innerHTML = `<span>📄 ${item.name}</span><small>${item.date}</small>`;
+                    div.onclick = () => launchApp(item.data);
+                    list.appendChild(div);
+                });
+            }
+        };
+
+        // Master File Processing
         document.getElementById('master-file-input').onchange = (e) => {
             const file = e.target.files[0];
+            if(!file) return;
             Papa.parse(file, {
                 header: true, skipEmptyLines: true,
                 complete: (r) => {
-                    document.getElementById('upload-screen').classList.add('hidden');
-                    document.getElementById('app-wrapper').classList.remove('hidden');
-                    initMasterList(r.data);
+                    const clean = r.data.map(row => ({
+                        en: row.EN || row.en || '',
+                        de: row.DE || row.de || '',
+                        fr: row.FR || row.fr || '',
+                        category: row.Category || row.category || '',
+                        definition: row.Definition || row.definition || ''
+                    }));
+                    let hist = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+                    hist.push({ name: file.name, data: clean, date: new Date().toLocaleDateString() });
+                    if(hist.length > 3) hist.shift();
+                    localStorage.setItem('glossary_history', JSON.stringify(hist));
+                    launchApp(clean);
                 }
             });
         };
 
-        function initMasterList(data) {
+        function launchApp(data) {
+            document.getElementById('upload-screen').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            initMaster(data);
+        }
+
+        function initMaster(data) {
             masterList = new List('main-section', {
                 valueNames: ['en', 'de', 'fr', 'category'],
                 item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td><td class="category col-cat"></td></tr>`
             }, data);
 
-            // Init Categories (Same as original index.html logic)
-            const cats = [...new Set(data.flatMap(i => (i.Category || i.category || '').split(',').map(s => s.trim())))].filter(s => s).sort();
-            const listEl = document.getElementById('master-cat-list');
+            // Populate Filter List (Fixing your missing categories)
+            const cats = [...new Set(data.flatMap(i => i.category.split(',').map(s => s.trim())))].filter(s => s).sort();
+            const filterEl = document.getElementById('master-cat-list');
+            filterEl.innerHTML = '';
             cats.forEach(c => {
                 const div = document.createElement('div');
-                div.innerHTML = `<input type="checkbox" value="${c}" class="cat-filter-chk"> ${c}`;
+                div.style.padding = '8px';
+                div.innerHTML = `<input type="checkbox" value="${c}" class="cat-chk"> ${c}`;
                 div.onclick = (e) => {
                     const cb = div.querySelector('input');
                     if(e.target !== cb) cb.checked = !cb.checked;
-                    updateFilters();
+                    updateMasterFilters();
                 };
-                listEl.appendChild(div);
+                filterEl.appendChild(div);
             });
         }
 
-        function updateFilters() {
-            const sel = Array.from(document.querySelectorAll('.cat-filter-chk:checked')).map(i => i.value);
+        function updateMasterFilters() {
+            const sel = Array.from(document.querySelectorAll('.cat-chk:checked')).map(i => i.value);
             document.getElementById('master-cat-badge').innerHTML = sel.length ? `<div class="count-badge">${sel.length}</div>` : '';
             masterList.filter(item => sel.length === 0 || sel.every(s => item.values().category.includes(s)));
         }
 
         // --- TODAY PANE LOGIC ---
         const dropArea = document.getElementById('drop-area');
+        dropArea.onclick = () => { let i = document.createElement('input'); i.type='file'; i.onchange=(e)=>handleTodayFile(e.target.files[0]); i.click(); };
         dropArea.ondragover = (e) => { e.preventDefault(); dropArea.classList.add('dragover'); };
-        dropArea.ondragleave = () => dropArea.classList.remove('dragover');
-        dropArea.ondrop = (e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            handleTodayFile(file);
-        };
+        dropArea.ondrop = (e) => { e.preventDefault(); handleTodayFile(e.dataTransfer.files[0]); };
 
         function handleTodayFile(file) {
             const ext = file.name.split('.').pop().toLowerCase();
             if (ext === 'csv') {
-                Papa.parse(file, { header: true, complete: (r) => initTodayList(r.data) });
+                Papa.parse(file, { header: true, complete: (r) => initToday(r.data) });
             } else if (ext === 'docx') {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     mammoth.convertToHtml({arrayBuffer: e.target.result}).then(res => {
                         const temp = document.createElement('div'); temp.innerHTML = res.value;
                         const rows = Array.from(temp.querySelectorAll('tr'));
+                        const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.innerText.trim().toLowerCase());
                         const data = rows.slice(1).map(tr => {
                             const tds = tr.querySelectorAll('td');
-                            return { en: tds[0]?.innerText, de: tds[1]?.innerText, fr: tds[2]?.innerText };
+                            let obj = {};
+                            headers.forEach((h, idx) => { if(tds[idx]) obj[h] = tds[idx].innerText.trim(); });
+                            return obj;
                         });
-                        initTodayList(data);
+                        initToday(data);
                     });
                 };
                 reader.readAsArrayBuffer(file);
             }
         }
 
-        function initTodayList(data) {
+        function initToday(data) {
             dropArea.classList.add('hidden');
             document.getElementById('today-list-container').classList.remove('hidden');
+
+            // Data cleanup and default column hiding logic
+            const cleanData = data.map(row => ({
+                en: row.en || row.EN || '',
+                de: row.de || row.DE || '',
+                fr: row.fr || row.FR || ''
+            }));
+
+            // Auto-hide columns with zero data
+            const hasEN = cleanData.some(r => r.en);
+            const hasDE = cleanData.some(r => r.de);
+            const hasFR = cleanData.some(r => r.fr);
+
             todayList = new List('today-section', {
                 valueNames: ['en', 'de', 'fr'],
                 item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td></tr>`
-            }, data);
+            }, cleanData);
+
+            // Set initial visibility
+            toggleTCol('en-t', hasEN); toggleTCol('de-t', hasDE); toggleTCol('fr-t', hasFR);
+            document.querySelector('[data-tcol="en-t"]').checked = hasEN;
+            document.querySelector('[data-tcol="de-t"]').checked = hasDE;
+            document.querySelector('[data-tcol="fr-t"]').checked = hasFR;
         }
 
         // --- UI HELPERS ---
@@ -278,29 +338,37 @@
 
         document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
 
-        // Master Column Toggles
+        // Column Management
         document.querySelectorAll('.col-chk').forEach(chk => {
-            chk.onchange = () => {
-                document.getElementById('main-list').classList.toggle(`hide-${chk.dataset.col}`, !chk.checked);
-            };
+            chk.onchange = () => document.getElementById('main-list').classList.toggle(`hide-${chk.dataset.col}`, !chk.checked);
         });
 
-        // Today Column Toggles
         document.querySelectorAll('.t-col-chk').forEach(chk => {
-            chk.onchange = () => {
-                document.getElementById('today-list').classList.toggle(`hide-${chk.dataset.tcol}`, !chk.checked);
-            };
+            chk.onchange = () => toggleTCol(chk.dataset.tcol, chk.checked);
         });
 
-        function viewMode(mode) {
+        function toggleTCol(colId, show) {
+            document.getElementById('today-list').classList.toggle(`hide-${colId}`, !show);
+        }
+
+        function setView(mode) {
             mainSec.classList.remove('hidden', 'full-width');
             todaySec.classList.remove('hidden', 'full-width');
             if(mode === 'master') { todaySec.classList.add('hidden'); mainSec.classList.add('full-width'); }
             if(mode === 'today') { mainSec.classList.add('hidden'); todaySec.classList.add('full-width'); }
         }
 
+        // Search Handlers
         document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value);
         document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
+
+        // Download Handler (Replica of original)
+        document.getElementById('main-download-btn').onclick = () => {
+            const csv = Papa.unparse(masterList.visibleItems.map(i => i.values()));
+            const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); 
+            a.download = "Glossary_filtered.csv"; a.click();
+        };
     </script>
 </body>
 </html>
