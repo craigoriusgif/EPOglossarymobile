@@ -428,7 +428,7 @@
         document.getElementById('download-csv-btn').onclick = function() {
             const csv = Papa.unparse(myList.visibleItems.map(item => item.values()));
             const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_export.csv"; a.click();
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_filtered.csv"; a.click();
         };
     </script>
 </body>
