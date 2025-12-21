@@ -29,34 +29,36 @@
 
         /* --- LAYOUT --- */
         #app-wrapper { display: flex; height: 100vh; width: 100vw; }
-        #main-section { flex: 2; padding: 20px; overflow-y: auto; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; }
-        #today-section { flex: 1; padding: 20px; overflow-y: auto; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; }
+        #main-section { flex: 2; padding: 15px; overflow-y: auto; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; }
+        #today-section { flex: 1; padding: 15px; overflow-y: auto; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; }
 
         .hidden { display: none !important; }
         .full-width { flex: 1 0 100% !important; border: none !important; }
 
-        /* --- SHARED UI (INDEX.HTML STYLE) --- */
-        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 10px; }
+        /* --- HEADERS --- */
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 10px; flex-shrink: 0; }
         .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .logo-img { height: 42px; width: auto; }
         
         .header-center-filters { display: flex; flex-grow: 1; gap: 12px; align-items: center; }
         .search-container { position: relative; flex: 2; display: flex; align-items: center; }
-        .header-center-buttons { display: flex; flex: 1; gap: 8px; align-items: center; }
         
         input[type="search"] { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; }
         
         .btn-ui { height: 40px; padding: 0 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
         .download-btn { background: var(--accent-green); color: white; border: none; font-weight: bold; }
         
-        #today-section .btn-ui { background: #3d484d; color: white; border-color: #636e72; }
-        
-        .dropdown-container { position: relative; flex: 1; display: flex; }
+        .dropdown-container { position: relative; display: flex; }
         .dropdown-options { position: absolute; top: 45px; background: white; border: 1px solid #d1d5db; z-index: 1000; max-height: 350px; width: 260px; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; color: var(--text-main); }
         
         .count-badge { background: var(--accent-blue); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: 6px; }
+        .reset-link { color: var(--accent-red); font-size: 11px; font-weight: bold; cursor: pointer; padding: 4px 8px; background: #fff5f5; border-radius: 4px; display: block; text-align: center; margin: 10px; border: 1px solid #fed7d7; }
 
-        /* --- TABLES --- */
+        /* --- CONTENT AREAS --- */
+        #main-scroll-area { flex-grow: 1; overflow-y: auto; }
+        #legal-iframe-container { flex-grow: 1; width: 100%; border: none; display: none; }
+        iframe { width: 100%; height: 100%; border: none; border-radius: 8px; background: white; }
+
         .list-table { width: 100%; border-collapse: collapse; background: white; }
         #today-section .list-table { background: transparent; }
         .list-table th, .list-table td { padding: 14px; border-bottom: 1px solid #f3f4f6; text-align: left; }
@@ -64,29 +66,29 @@
         .list-table th { background: #f9fafb; cursor: pointer; font-size: 13px; position: sticky; top: 0; }
         #today-section .list-table th { background: #4b5563; color: white; }
 
-        /* Today Pane Drop Zone */
         #drop-area { border: 2px dashed #636e72; border-radius: 12px; padding: 40px 20px; text-align: center; margin-top: 20px; cursor: pointer; }
         #drop-area.dragover { background: #3d484d; border-color: var(--accent-blue); }
 
-        /* Navigation Toggles */
-        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 8px; }
-        .toggle-btn { background: #1c1e21; color: white; border: none; padding: 10px 16px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 600; opacity: 0.9; }
-        .toggle-btn:hover { opacity: 1; transform: translateY(-1px); }
-
-        /* Initial Screen */
-        #upload-screen { max-width: 500px; margin: 100px auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .recent-item { padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-top: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; }
+        /* --- VIEW CONTROLS (BOTTOM) --- */
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 2000; display: flex; gap: 8px; flex-wrap: wrap; max-width: 90vw; }
+        .toggle-btn { background: #1c1e21; color: white; border: none; padding: 10px 16px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; opacity: 0.85; transition: all 0.2s; }
+        .toggle-btn:hover { opacity: 1; transform: translateY(-1px); background: #000; }
+        .toggle-btn.active { background: var(--accent-blue); opacity: 1; box-shadow: 0 0 10px rgba(0,102,204,0.4); }
+        .btn-sep { width: 1px; height: 25px; background: rgba(255,255,255,0.2); align-self: center; margin: 0 4px; }
 
         /* Column Visibility */
         #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
         #today-list.hide-en-t .col-en, #today-list.hide-de-t .col-de, #today-list.hide-fr-t .col-fr { display: none !important; }
+
+        #upload-screen { max-width: 500px; margin: 100px auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .recent-item { padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-top: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
     <div id="upload-screen">
         <h1>Glossary Pro</h1>
-        <p>Upload the <strong>Master CSV</strong> to enable split-view.</p>
+        <p>Upload the <strong>Master CSV</strong> to begin.</p>
         <div style="position:relative; margin-bottom: 20px;">
             <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white; font-weight:bold;">Choose Master File</button>
             <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
@@ -103,53 +105,60 @@
             <div class="header-with-logo">
                 <div class="header-left">
                     <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'">
-                    <h2 style="margin:0;">Glossary</h2>
+                    <h2 id="main-title">Glossary</h2>
                 </div>
-                <div class="header-center-filters">
+                <div class="header-center-filters" id="main-filters-row">
                     <div class="search-container">
                         <input type="search" id="master-search" placeholder="Search terms...">
                     </div>
-                    <div class="header-center-buttons">
-                        <div class="dropdown-container">
-                            <button class="btn-ui" onclick="toggleDrop('cat-drop', event)">🏷️ Categories <span id="master-cat-badge"></span></button>
-                            <div id="cat-drop" class="dropdown-options"><div id="master-cat-list" style="padding:10px;"></div></div>
+                    <div class="dropdown-container">
+                        <button class="btn-ui" onclick="toggleDrop('cat-drop', event)">🏷️ Categories <span id="master-cat-badge"></span></button>
+                        <div id="cat-drop" class="dropdown-options">
+                            <span class="reset-link" onclick="resetCats(event)">Reset Categories</span>
+                            <div id="master-cat-list" style="padding:0 10px 10px 10px;"></div>
                         </div>
-                        <div class="dropdown-container">
-                            <button class="btn-ui" onclick="toggleDrop('col-drop', event)">⚙️ Columns</button>
-                            <div id="col-drop" class="dropdown-options" style="padding:10px;">
-                                <div><input type="checkbox" checked data-col="en" class="col-chk"> English</div>
-                                <div><input type="checkbox" checked data-col="de" class="col-chk"> German</div>
-                                <div><input type="checkbox" checked data-col="fr" class="col-chk"> French</div>
-                                <div><input type="checkbox" checked data-col="cat" class="col-chk"> Category</div>
-                            </div>
+                    </div>
+                    <div class="dropdown-container">
+                        <button class="btn-ui" onclick="toggleDrop('col-drop', event)">⚙️ Columns</button>
+                        <div id="col-drop" class="dropdown-options" style="padding:10px;">
+                            <div><input type="checkbox" checked data-col="en" class="col-chk"> English</div>
+                            <div><input type="checkbox" checked data-col="de" class="col-chk"> German</div>
+                            <div><input type="checkbox" checked data-col="fr" class="col-chk"> French</div>
+                            <div><input type="checkbox" checked data-col="cat" class="col-chk"> Category</div>
                         </div>
                     </div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button id="main-download-btn" class="btn-ui download-btn">📥 Download</button>
-                    <button class="btn-ui" onclick="location.reload()">↻</button>
+                    <button class="btn-ui" onclick="location.reload()">↻ Load New</button>
                 </div>
             </div>
 
-            <div id="main-list">
-                <table class="list-table">
-                    <thead>
-                        <tr>
-                            <th class="sort col-en" data-sort="en">English</th>
-                            <th class="sort col-de" data-sort="de">German</th>
-                            <th class="sort col-fr" data-sort="fr">French</th>
-                            <th class="sort col-cat" data-sort="category">Category</th>
-                        </tr>
-                    </thead>
-                    <tbody class="list"></tbody>
-                </table>
+            <div id="main-scroll-area">
+                <div id="main-list">
+                    <table class="list-table">
+                        <thead>
+                            <tr>
+                                <th class="sort col-en" data-sort="en">English</th>
+                                <th class="sort col-de" data-sort="de">German</th>
+                                <th class="sort col-fr" data-sort="fr">French</th>
+                                <th class="sort col-cat" data-sort="category">Category</th>
+                            </tr>
+                        </thead>
+                        <tbody class="list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="legal-iframe-container">
+                <iframe id="legal-frame" src=""></iframe>
             </div>
         </section>
 
         <section id="today-section">
             <div class="header-with-logo" style="border-bottom-color: #4b5563;">
-                <h2 style="margin:0; color:white;">Today's Case</h2>
-                <div class="dropdown-container" id="today-col-container">
+                <h2 style="margin:0; color:white;">Today</h2>
+                <div class="dropdown-container">
                     <button class="btn-ui" onclick="toggleDrop('today-col-drop', event)">⚙️ Columns</button>
                     <div id="today-col-drop" class="dropdown-options" style="padding:10px;">
                         <div><input type="checkbox" checked data-tcol="en-t" class="t-col-chk"> EN</div>
@@ -161,7 +170,7 @@
 
             <div id="drop-area">
                 <div style="font-size: 32px;">📄</div>
-                <p>Drag & Drop Case Vocab<br><small>(CSV or Word Table)</small></p>
+                <p>Drag Case Vocab Here<br><small>(CSV or Word)</small></p>
             </div>
 
             <div id="today-list-container" class="hidden">
@@ -170,13 +179,7 @@
                 </div>
                 <div id="today-list">
                     <table class="list-table">
-                        <thead>
-                            <tr>
-                                <th class="sort col-en" data-sort="en">EN</th>
-                                <th class="sort col-de" data-sort="de">DE</th>
-                                <th class="sort col-fr" data-sort="fr">FR</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th class="sort col-en" data-sort="en">EN</th><th class="sort col-de" data-sort="de">DE</th><th class="sort col-fr" data-sort="fr">FR</th></tr></thead>
                         <tbody class="list"></tbody>
                     </table>
                 </div>
@@ -185,17 +188,23 @@
     </div>
 
     <div class="pane-controls">
-        <button class="toggle-btn" onclick="setView('master')">Main Only</button>
-        <button class="toggle-btn" onclick="setView('split')">Split View</button>
-        <button class="toggle-btn" onclick="setView('today')">Today Only</button>
+        <button class="toggle-btn active" id="btn-split" onclick="setLayout('split')">Split View</button>
+        <button class="toggle-btn" id="btn-master" onclick="setLayout('master')">Main Only</button>
+        <button class="toggle-btn" id="btn-today" onclick="setLayout('today')">Today Only</button>
+        <div class="btn-sep"></div>
+        <button class="toggle-btn" id="btn-caselaw" onclick="showLegal('https://www.epo.org/en/legal/case-law/2025/index.html', 'Case Law', 'btn-caselaw')">Case Law</button>
+        <button class="toggle-btn" id="btn-guidelines" onclick="showLegal('https://www.epo.org/en/legal/guidelines-epc/2025/index.html', 'Guidelines', 'btn-guidelines')">Guidelines</button>
+        <button class="toggle-btn" id="btn-epc" onclick="showLegal('https://www.epo.org/en/legal/epc/2020/convention.html', 'EPC', 'btn-epc')">EPC</button>
     </div>
 
     <script>
         let masterList, todayList;
         const mainSec = document.getElementById('main-section');
         const todaySec = document.getElementById('today-section');
+        const listContainer = document.getElementById('main-list');
+        const iframeContainer = document.getElementById('legal-iframe-container');
+        const iframe = document.getElementById('legal-frame');
 
-        // History handling (Matching index.html)
         window.onload = () => {
             const history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
             if(history.length > 0) {
@@ -211,7 +220,6 @@
             }
         };
 
-        // Master File Processing
         document.getElementById('master-file-input').onchange = (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -222,7 +230,7 @@
                         en: row.EN || row.en || '',
                         de: row.DE || row.de || '',
                         fr: row.FR || row.fr || '',
-                        category: row.Category || row.category || '',
+                        category: (row.Category || row.category || '').replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).join(', '),
                         definition: row.Definition || row.definition || ''
                     }));
                     let hist = JSON.parse(localStorage.getItem('glossary_history') || '[]');
@@ -246,7 +254,6 @@
                 item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td><td class="category col-cat"></td></tr>`
             }, data);
 
-            // Populate Filter List (Fixing your missing categories)
             const cats = [...new Set(data.flatMap(i => i.category.split(',').map(s => s.trim())))].filter(s => s).sort();
             const filterEl = document.getElementById('master-cat-list');
             filterEl.innerHTML = '';
@@ -269,7 +276,41 @@
             masterList.filter(item => sel.length === 0 || sel.every(s => item.values().category.includes(s)));
         }
 
-        // --- TODAY PANE LOGIC ---
+        function resetCats(e) {
+            if(e) e.stopPropagation();
+            document.querySelectorAll('.cat-chk').forEach(c => c.checked = false);
+            updateMasterFilters();
+        }
+
+        function showLegal(url, title, btnId) {
+            listContainer.classList.add('hidden');
+            document.getElementById('main-filters-row').classList.add('hidden');
+            iframeContainer.style.display = 'block';
+            iframe.src = url;
+            document.getElementById('main-title').textContent = title;
+            updateActiveBtn(btnId);
+        }
+
+        function setLayout(mode) {
+            listContainer.classList.remove('hidden');
+            document.getElementById('main-filters-row').classList.remove('hidden');
+            iframeContainer.style.display = 'none';
+            document.getElementById('main-title').textContent = 'Glossary';
+            
+            mainSec.classList.remove('hidden', 'full-width');
+            todaySec.classList.remove('hidden', 'full-width');
+            
+            if(mode === 'master') { todaySec.classList.add('hidden'); mainSec.classList.add('full-width'); updateActiveBtn('btn-master'); }
+            else if(mode === 'today') { mainSec.classList.add('hidden'); todaySec.classList.add('full-width'); updateActiveBtn('btn-today'); }
+            else { updateActiveBtn('btn-split'); }
+        }
+
+        function updateActiveBtn(id) {
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // --- TODAY PANE DROP LOGIC ---
         const dropArea = document.getElementById('drop-area');
         dropArea.onclick = () => { let i = document.createElement('input'); i.type='file'; i.onchange=(e)=>handleTodayFile(e.target.files[0]); i.click(); };
         dropArea.ondragover = (e) => { e.preventDefault(); dropArea.classList.add('dragover'); };
@@ -302,72 +343,31 @@
         function initToday(data) {
             dropArea.classList.add('hidden');
             document.getElementById('today-list-container').classList.remove('hidden');
-
-            // Data cleanup and default column hiding logic
-            const cleanData = data.map(row => ({
-                en: row.en || row.EN || '',
-                de: row.de || row.DE || '',
-                fr: row.fr || row.FR || ''
-            }));
-
-            // Auto-hide columns with zero data
-            const hasEN = cleanData.some(r => r.en);
-            const hasDE = cleanData.some(r => r.de);
-            const hasFR = cleanData.some(r => r.fr);
-
+            const cleanData = data.map(row => ({ en: row.en || row.EN || '', de: row.de || row.DE || '', fr: row.fr || row.FR || '' }));
+            const hasEN = cleanData.some(r => r.en); const hasDE = cleanData.some(r => r.de); const hasFR = cleanData.some(r => r.fr);
+            
             todayList = new List('today-section', {
                 valueNames: ['en', 'de', 'fr'],
                 item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td></tr>`
             }, cleanData);
 
-            // Set initial visibility
             toggleTCol('en-t', hasEN); toggleTCol('de-t', hasDE); toggleTCol('fr-t', hasFR);
             document.querySelector('[data-tcol="en-t"]').checked = hasEN;
             document.querySelector('[data-tcol="de-t"]').checked = hasDE;
             document.querySelector('[data-tcol="fr-t"]').checked = hasFR;
         }
 
-        // --- UI HELPERS ---
-        function toggleDrop(id, e) {
-            e.stopPropagation();
-            const el = document.getElementById(id);
-            const isVis = el.style.display === 'block';
-            document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
-            el.style.display = isVis ? 'none' : 'block';
-        }
-
+        function toggleDrop(id, e) { e.stopPropagation(); const el = document.getElementById(id); const isVis = el.style.display === 'block'; document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none'); el.style.display = isVis ? 'none' : 'block'; }
         document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
-
-        // Column Management
-        document.querySelectorAll('.col-chk').forEach(chk => {
-            chk.onchange = () => document.getElementById('main-list').classList.toggle(`hide-${chk.dataset.col}`, !chk.checked);
-        });
-
-        document.querySelectorAll('.t-col-chk').forEach(chk => {
-            chk.onchange = () => toggleTCol(chk.dataset.tcol, chk.checked);
-        });
-
-        function toggleTCol(colId, show) {
-            document.getElementById('today-list').classList.toggle(`hide-${colId}`, !show);
-        }
-
-        function setView(mode) {
-            mainSec.classList.remove('hidden', 'full-width');
-            todaySec.classList.remove('hidden', 'full-width');
-            if(mode === 'master') { todaySec.classList.add('hidden'); mainSec.classList.add('full-width'); }
-            if(mode === 'today') { mainSec.classList.add('hidden'); todaySec.classList.add('full-width'); }
-        }
-
-        // Search Handlers
+        document.querySelectorAll('.col-chk').forEach(chk => chk.onchange = () => document.getElementById('main-list').classList.toggle(`hide-${chk.dataset.col}`, !chk.checked));
+        document.querySelectorAll('.t-col-chk').forEach(chk => chk.onchange = () => toggleTCol(chk.dataset.tcol, chk.checked));
+        function toggleTCol(colId, show) { document.getElementById('today-list').classList.toggle(`hide-${colId}`, !show); }
         document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value);
         document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
-
-        // Download Handler (Replica of original)
         document.getElementById('main-download-btn').onclick = () => {
             const csv = Papa.unparse(masterList.visibleItems.map(i => i.values()));
             const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); 
-            a.download = "Glossary_filtered.csv"; a.click();
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Glossary_filtered.csv"; a.click();
         };
     </script>
 </body>
