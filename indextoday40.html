@@ -68,6 +68,10 @@
         .today-sticky-header { position: sticky; top: 0; z-index: 100; background: inherit; padding-bottom: 10px; }
         #today-scroll-area { overflow-y: auto; flex-grow: 1; }
 
+        .full-width #today-body, .full-width #pinned-body { display: block; columns: 2; column-gap: 50px; column-rule: 2px solid rgba(128,128,128,0.5); }
+        .full-width #today-body tr, .full-width #pinned-body tr { display: flex; width: 100%; break-inside: avoid; border-bottom: 1px solid rgba(128,128,128,0.2); }
+        .full-width #today-body td, .full-width #pinned-body td { flex: 1; padding: 10px 5px; }
+
         .today-header-container { margin-bottom: 15px; border-bottom: 1px solid rgba(128,128,128,0.3); padding-bottom: 10px; }
         .patent-info-table { width: 100%; font-size: 12px; border-collapse: collapse; background: rgba(0,0,0,0.1); }
         .patent-info-table td { padding: 6px 10px; border: 1px solid rgba(128,128,128,0.2); }
@@ -77,304 +81,326 @@
         .list-table { width: 100%; border-collapse: collapse; background: white; }
         #today-section .list-table { background: transparent; color: inherit; }
         .list-table th, .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); text-align: left; font-size: 13px; }
-        
         #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
 
-        .dropdown { position: relative; display: inline-block; }
-        .dropdown-options { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px; padding: 10px; }
-        .dropdown-options label { display: block; padding: 5px; font-size: 12px; cursor: pointer; color: black; }
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 3000; display: flex; gap: 10px; background: rgba(255,255,255,0.95); padding: 10px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid var(--border-color); align-items: center; }
+        .toggle-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; font-size: 11px; font-weight: 700; transition: all 0.2s; background: white; }
+        .btn-gl { background: #7f8c8d !important; color: white !important; }
+        .btn-epc { background: #c0392b !important; color: white !important; }
 
-        #landing-screen { position: absolute; inset: 0; background: var(--primary-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
-        .upload-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px; }
-        .file-input-wrapper { border: 2px dashed #d1d5db; border-radius: 12px; padding: 40px 20px; margin: 20px 0; cursor: pointer; transition: all 0.2s; }
-        .file-input-wrapper:hover { border-color: var(--accent-blue); background: #f8faff; }
         .recent-list { margin-top: 25px; text-align: left; }
         .recent-item { padding: 12px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); }
+        .recent-item:hover { background: #f9f9f9; }
+
+        /* Drag box border highlight */
+        #drop-area.drag-over { border-color: var(--accent-blue) !important; background: rgba(0, 102, 204, 0.1) !important; }
     </style>
 </head>
 <body>
 
-    <div id="landing-screen">
-        <div class="upload-card">
-            <h1 style="margin-bottom: 10px;">EPO Glossary</h1>
-            <p style="color: #65676b; margin-bottom: 30px;">Professional Patent Translation Environment</p>
-            <div class="file-input-wrapper" onclick="document.getElementById('csv-upload').click()">
-                <div style="font-size: 40px; margin-bottom: 10px;">📄</div>
-                <strong>Click to upload Glossary CSV</strong>
-                <p style="font-size: 12px; color: #65676b; margin-top: 10px;">Standard EPO Export Format</p>
-                <input type="file" id="csv-upload" accept=".csv" class="hidden" onchange="handleUpload(event)">
-            </div>
-            <div id="history-list" class="recent-list"></div>
+    <div id="help-pane" class="side-pane">
+        <div class="pane-header"><h2>User Guide</h2><button class="close-pane-btn" onclick="togglePane('help-pane', false)">&times;</button></div>
+        <div style="font-size: 14px; line-height: 1.6;">
+            <p><strong>🔍 Search:</strong> Filter terms in any language instantly.</p>
+            <p><strong>🏷️ Categories:</strong> Use the dropdown to filter by field.</p>
+            <p><strong>💡 Definitions:</strong> Click rows with a light bulb to see explanations.</p>
+            <p><strong>📌 Pinning:</strong> Click rows in the "Today" list to keep terms at the top.</p>
         </div>
     </div>
 
-    <div id="app-wrapper">
-        <div id="main-section">
+    <div id="landing-help-pane" class="side-pane">
+        <div class="pane-header"><h2>Quick Start Guide</h2><button class="close-pane-btn" onclick="togglePane('landing-help-pane', false)">&times;</button></div>
+        <div style="font-size: 14px; line-height: 1.6;">
+            <p><strong>Welcome to Glossary Pro!</strong> This tool is designed for legal professionals to manage and reference patent terminology across English, German, and French.</p>
+            <div style="margin: 15px 0; padding: 15px; border: 1px solid var(--accent-blue); border-radius: 8px; background: rgba(0, 102, 204, 0.05);">
+                <h4 style="margin-top:0;">🚀 Loading your Master Glossary</h4>
+                <ol>
+                    <li>Click the <strong>"Load Master CSV"</strong> button in the center of the screen.</li>
+                    <li>Select a CSV file from your computer.</li>
+                    <li>Ensure your CSV has columns titled: <em>EN, DE, FR, Category,</em> and <em>Definition</em>.</li>
+                </ol>
+            </div>
+            <p>Once loaded, you can search thousands of terms instantly and manage specific case terminology in the "Today" pane.</p>
+        </div>
+    </div>
+
+    <div id="details-pane" class="side-pane">
+        <div class="pane-header"><h2 id="det-en" style="color:var(--accent-blue); margin:0;">Term</h2><button class="close-pane-btn" onclick="togglePane('details-pane', false)">&times;</button></div>
+        <div id="details-content">
+            <div style="margin-bottom:20px;"><h4>Definition</h4><p id="det-def" style="font-style: italic; color: #555;">-</p></div>
+            <div style="margin-bottom:20px;"><h4>German (DE)</h4><p id="det-de">-</p></div>
+            <div style="margin-bottom:20px;"><h4>French (FR)</h4><p id="det-fr">-</p></div>
+            <div style="margin-bottom:20px;"><h4>Category</h4><p id="det-cat">-</p></div>
+        </div>
+    </div>
+
+    <div id="upload-screen" style="max-width: 450px; margin: 10vh auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <h1 style="margin-bottom:30px;">Glossary Pro</h1>
+        <div style="position:relative; margin-bottom: 20px;">
+            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white; height:50px; font-size:14px;">Load Master CSV</button>
+            <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+        </div>
+        
+        <button class="btn-ui" style="width:100%; margin-bottom:20px; border: 1px solid var(--accent-blue); color: var(--accent-blue);" onclick="togglePane('landing-help-pane', true)">❓ How to use this tool</button>
+
+        <div id="recent-container" class="recent-list hidden">
+            <h4 style="margin-bottom: 10px; color: #666; border-bottom: 1px solid #eee; padding-bottom: 5px;">Recently Used</h4>
+            <div id="recent-items"></div>
+        </div>
+    </div>
+
+    <div id="app-wrapper" class="hidden">
+        <section id="main-section">
             <div class="header-with-logo">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button class="btn-ui" onclick="togglePane('history-pane')">☰</button>
-                    <h2 id="main-title" style="font-size: 16px; margin: 0; white-space: nowrap;">Glossary</h2>
-                </div>
-
+                <h2 id="main-title" style="margin:0; font-size:18px;">Glossary</h2>
                 <div class="header-center-filters">
-                    <div id="view-controls" class="hidden" style="display: flex; gap: 4px;">
-                        <button class="btn-ui" onclick="toggleView('split')">Split View</button>
-                        <button class="btn-ui" onclick="toggleView('master')">Main Only</button>
-                        <button class="btn-ui" onclick="toggleView('today')">Today Only</button>
-                    </div>
-
-                    <input type="search" id="master-search" placeholder="Search Master..." style="flex-grow: 1;">
+                    <input type="search" id="master-search" placeholder="Search Master..." style="flex:2;" onsearch="masterList.search(this.value, ['en', 'de', 'fr'])">
                     
-                    <div class="dropdown">
-                        <button class="btn-ui" onclick="toggleDrop('col-drop', event)">Columns ▾</button>
-                        <div id="col-drop" class="dropdown-options" onclick="event.stopPropagation()">
-                            <label><input type="checkbox" checked onchange="toggleCol('en')"> English</label>
-                            <label><input type="checkbox" checked onchange="toggleCol('de')"> German</label>
-                            <label><input type="checkbox" checked onchange="toggleCol('fr')"> French</label>
-                            <label><input type="checkbox" checked onchange="toggleCol('cat')"> Category</label>
+                    <div class="dropdown-container" style="position:relative;">
+                        <button class="btn-ui" onclick="toggleDrop('cat-drop', event)">🏷️ Categories <span id="cat-badge-val" class="badge-inline hidden">0</span></button>
+                        <div id="cat-drop" class="dropdown-options" style="position: absolute; top: 45px; background: white; border: 1px solid #d1d5db; z-index: 1000; max-height: 350px; width: 220px; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; padding: 10px;">
+                            <div style="border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:5px; display:flex; justify-content:space-between;">
+                                <strong>Filter</strong>
+                                <span style="color:var(--accent-red); cursor:pointer; font-size:11px;" onclick="resetCategories()">Reset ×</span>
+                            </div>
+                            <div id="master-cat-list"></div>
                         </div>
                     </div>
-                </div>
 
-                <button class="btn-ui" onclick="togglePane('settings-pane')">⚙️</button>
-            </div>
+                    <div class="dropdown-container" style="position:relative;">
+                        <button class="btn-ui" onclick="toggleDrop('col-drop', event)">⚙️ Columns</button>
+                        <div id="col-drop" class="dropdown-options" style="position: absolute; top: 45px; background: white; border: 1px solid #d1d5db; z-index: 1000; max-height: 350px; width: 220px; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; padding: 10px;">
+                            <label style="display:block; margin-bottom:8px;"><input type="checkbox" checked onchange="toggleCol('en', this.checked)"> English</label>
+                            <label style="display:block; margin-bottom:8px;"><input type="checkbox" checked onchange="toggleCol('de', this.checked)"> German</label> <label style="display:block; margin-bottom:8px;"><input type="checkbox" checked onchange="toggleCol('fr', this.checked)"> French</label> <label style="display:block;"><input type="checkbox" checked onchange="toggleCol('cat', this.checked)"> Category</label> </div> </div> <button class="btn-ui" onclick="location.reload()">🔄 Load New</button> <button class="btn-ui btn-download" onclick="downloadMaster()">📥 Download</button> <button class="btn-ui" onclick="togglePane('help-pane', true)">❓ Help</button> </div> </div> <div id="main-scroll-area" style="flex-grow:1; overflow-y:auto;"> <div id="main-list"> <table class="list-table"> <thead><tr><th class="col-en">English</th><th class="col-de">German</th><th class="col-fr">French</th><th class="col-cat">Category</th></tr></thead> <tbody class="list"></tbody> </table> </div> <div id="legal-iframe-container" class="hidden" style="height:100%"><iframe id="legal-frame" style="width:100%; height:100%; border:none;"></iframe></div> </div> </section> <section id="today-section" class="theme-dark"> <div id="patent-info-wrapper"> <div style="display:flex; gap:5px; margin-bottom:10px;"> <select id="header-select" style="height:30px; font-size:11px; flex:1; background:rgba(0,0,0,0.3); color:inherit; border:1px solid #666; border-radius:4px;"></select> <button onclick="addMetaRow()" class="btn-ui" style="height:30px; width:30px; padding:0; background:rgba(255,255,255,0.1); color:inherit;">+</button> <div style="display:flex; border:1px solid #555; border-radius:4px; overflow:hidden;"> <button class="lang-toggle-btn active" onclick="setMetaLang('en')" style="padding:0 8px; font-size:10px; cursor:pointer;">EN</button> <button class="lang-toggle-btn" onclick="setMetaLang('de')" style="padding:0 8px; font-size:10px; cursor:pointer;">DE</button> <button class="lang-toggle-btn" onclick="setMetaLang('fr')" style="padding:0 8px; font-size:10px; cursor:pointer;">FR</button> </div> <button onclick="togglePatentInfo()" class="btn-ui" style="height:30px; font-size:10px; padding:0 8px; background:rgba(255,255,255,0.1); color:inherit;">Hide ▴</button> </div> <div id="patent-table-content" class="today-header-container"> <table class="patent-info-table" id="meta-table-body"></table> </div> </div> <div id="patent-hidden-indicator" class="hidden" style="text-align:center; margin-bottom:10px;"> <button onclick="togglePatentInfo()" style="background:none; border:1px solid rgba(128,128,128,0.5); color:inherit; font-size:10px; padding:2px 10px; border-radius:4px; cursor:pointer;">Show Patent Info ▾</button> </div> <div id="drop-area" style="border: 2px dashed rgba(128,128,128,0.5); padding: 20px; text-align: center; cursor: pointer; border-radius: 8px;">Drop Case CSV or Word Table</div> <div id="today-list-container" class="hidden"> <div class="today-sticky-header"> <div style="display:flex; gap:8px; margin-bottom:10px;"> <input type="search" id="today-search" style="flex:1; padding:10px; border-radius:6px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(128,128,128,0.3);" placeholder="Filter today's terms..." onsearch="todayList.search(this.value)"> <button onclick="addNewTermPrompt()" class="btn-ui" style="background:var(--accent-blue); color:white; border:none;">[+] Add Term</button> <button onclick="downloadToday()" class="btn-ui btn-download">📥 Export</button> </div> <div id="today-pinned-area" class="hidden"><table class="list-table"><tbody id="pinned-body"></tbody></table></div> </div> <div id="today-scroll-area"><table class="list-table"><tbody id="today-body" class="list"></tbody></table></div> </div> <div style="margin-top:auto; padding-top:12px; border-top:1px solid rgba(128,128,128,0.2); display:flex; justify-content:space-between; align-items:center;"> <div style="font-size:12px; font-weight:600; opacity:0.8;">💡 Click rows to pin terms</div> <div style="display:flex; gap:12px;"> <button onclick="setTheme('light')" style="width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #999; cursor:pointer;"></button> <button onclick="setTheme('dark')" style="width:20px; height:20px; border-radius:50%; background:#2d3436; border:1px solid #999; cursor:pointer;"></button> <button onclick="setTheme('sepia')" style="width:20px; height:20px; border-radius:50%; background:#f4ecd8; border:1px solid #999; cursor:pointer;"></button> </div> </div> </section> </div>
 
-            <div id="main-list" style="overflow-y: auto; flex-grow: 1;">
-                <table class="list-table">
-                    <thead>
-                        <tr>
-                            <th class="col-en">English</th>
-                            <th class="col-de">German</th>
-                            <th class="col-fr">French</th>
-                            <th class="col-cat">Category</th>
-                            <th style="width: 50px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="list"></tbody>
-                </table>
-            </div>
-
-            <div id="legal-iframe-container" class="hidden">
-                <div style="padding: 10px; background: #eee; display: flex; justify-content: flex-end;">
-                    <button class="btn-ui" onclick="closeLegal()">✕ Close Legal View</button>
-                </div>
-                <iframe id="legal-frame" style="flex:1; border:none; width:100%; height:100%;"></iframe>
-            </div>
-        </div>
-
-        <div id="today-section">
-            <div class="today-sticky-header">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h3 style="margin: 0; font-size: 14px;">Today's Session <span id="today-count" class="badge-inline">0</span></h3>
-                    <div style="display: flex; gap: 5px;">
-                        <button class="btn-ui" style="background: transparent; color: inherit; border:1px solid rgba(128,128,128,0.3);" onclick="setTheme('light')">L</button>
-                        <button class="btn-ui" style="background: transparent; color: inherit; border:1px solid rgba(128,128,128,0.3);" onclick="setTheme('dark')">D</button>
-                        <button class="btn-ui" style="background: transparent; color: inherit; border:1px solid rgba(128,128,128,0.3);" onclick="setTheme('sepia')">S</button>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                    <input type="search" id="today-search" placeholder="Search session..." style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
-                    <button class="btn-ui btn-download" onclick="exportToday()">Export CSV</button>
-                </div>
-
-                <div class="today-header-container">
-                    <table class="patent-info-table">
-                        <tr><td class="info-label">Patent #</td><td><input type="text" class="input-inline-edit" placeholder="EP 1234567"></td></tr>
-                        <tr><td class="info-label">Applicant</td><td><input type="text" class="input-inline-edit" placeholder="Company Name"></td></tr>
-                        <tr><td class="info-label">Title</td><td><input type="text" class="input-inline-edit" placeholder="Method of..."></td></tr>
-                    </table>
-                </div>
-            </div>
-
-            <div id="today-scroll-area">
-                <table class="list-table">
-                    <tbody id="pinned-body" style="border-bottom: 2px solid var(--accent-blue);"></tbody>
-                    <tbody id="today-body" class="list"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="history-pane" class="side-pane">
-        <div class="pane-header"><h3>History</h3><button class="close-pane-btn" onclick="togglePane('history-pane')">×</button></div>
-        <div id="pane-history-list"></div>
-    </div>
-
-    <div id="settings-pane" class="side-pane">
-        <div class="pane-header"><h3>Settings</h3><button class="close-pane-btn" onclick="togglePane('settings-pane')">×</button></div>
-        <div style="margin-top: 20px;">
-            <p><strong>External Resources</strong></p>
-            <button class="btn-ui" style="width: 100%; margin-bottom: 10px; background:#7f8c8d; color:white;" onclick="showLegal('https://www.epo.org/en/legal/glossary', 'EPO Glossary')">EPO Glossary</button>
-            <button class="btn-ui" style="width: 100%; background:#c0392b; color:white;" onclick="showLegal('https://www.epo.org/en/legal/epc', 'EPC Articles')">EPC Legal Texts</button>
-        </div>
+    <div class="pane-controls hidden">
+        <button class="toggle-btn" onclick="setLayout('split')">Split View</button>
+        <button class="toggle-btn" onclick="setLayout('master')">Main Only</button>
+        <button class="toggle-btn" onclick="setLayout('today')">Today Only</button>
+        <span style="color:#666; margin: 0 5px;">|</span>
+        <button class="toggle-btn btn-gl" onclick="showLegal('https://www.epo.org/en/legal/guidelines-epc/2025/index.html', 'Guidelines')">GL</button>
+        <button class="toggle-btn btn-cl" onclick="showLegal('https://www.epo.org/en/legal/case-law', 'Case Law')">Case Law</button>
+        <button class="toggle-btn btn-epc" onclick="showLegal('https://www.epo.org/en/legal/epc/2020/convention.html', 'EPC')">EPC</button>
     </div>
 
     <script>
-        let masterList, todayList;
-        let masterData = [];
+        let masterList, todayList, pinnedItems = [];
+        let currentMetaLang = 'en';
 
-        function handleUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    masterData = results.data;
-                    initLists();
-                    saveToHistory(file.name, masterData);
-                    document.getElementById('landing-screen').classList.add('hidden');
-                    document.getElementById('view-controls').classList.remove('hidden');
-                }
-            });
-        }
+        const headerTranslations = {
+            pat: { en: "Patent Number", de: "Patentnummer", fr: "Numéro de brevet" },
+            app: { en: "Application Number", de: "Anmelnummer", fr: "Numéro de dépôt" },
+            tit: { en: "Title", de: "Titel", fr: "Titre" },
+            pri: { en: "Priority date", de: "Prioritätstag", fr: "Date de priorité" },
+            pro: { en: "Proprietor", de: "Patentinhaber", fr: "Titulaire" },
+            opp: { en: "Opponent", de: "Einsprechender", fr: "Opposant(e)" },
+            res: { en: "Respondent", de: "Beschwerdegegner", fr: "Intimé(e)" },
+            apl: { en: "Appellant", de: "Beschwerdeführer", fr: "Requérant(e)" }
+        };
 
-        function initLists() {
-            masterList = new List('main-list', {
-                valueNames: ['en', 'de', 'fr', 'cat'],
-                item: `<tr>
-                    <td class="en col-en"></td>
-                    <td class="de col-de"></td>
-                    <td class="fr col-fr"></td>
-                    <td class="cat col-cat"></td>
-                    <td><button class="btn-ui" onclick="addToToday(this)">+</button></td>
-                </tr>`
-            }, masterData);
-
-            todayList = new List('today-section', {
-                valueNames: ['en', 'de', 'fr'],
-                item: `<tr>
-                    <td class="en"></td>
-                    <td class="de"></td>
-                    <td class="fr"></td>
-                    <td><button class="btn-ui" onclick="togglePin(this)">📌</button></td>
-                </tr>`
-            });
-        }
-
-        function addToToday(btn) {
-            const row = btn.closest('tr');
-            const item = {
-                en: row.querySelector('.en').textContent,
-                de: row.querySelector('.de').textContent,
-                fr: row.querySelector('.fr').textContent
-            };
-            todayList.add(item);
-            updateTodayCount();
-        }
-
-        function togglePin(btn) {
-            const row = btn.closest('tr');
-            const pinnedBody = document.getElementById('pinned-body');
-            const todayBody = document.getElementById('today-body');
-            if (row.parentElement.id === 'pinned-body') {
-                todayBody.appendChild(row);
-                btn.style.opacity = "0.5";
-            } else {
-                pinnedBody.appendChild(row);
-                btn.style.opacity = "1";
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+            const container = document.getElementById('recent-container');
+            const itemsDiv = document.getElementById('recent-items');
+            if (history.length > 0) {
+                container.classList.remove('hidden');
+                itemsDiv.innerHTML = '';
+                history.forEach((item) => {
+                    const div = document.createElement('div');
+                    div.className = 'recent-item';
+                    div.innerHTML = `<span>📄 ${item.name}</span><span style="font-size:11px; color:#999;">${item.date}</span>`;
+                    div.onclick = () => launchApp(item.data);
+                    itemsDiv.appendChild(div);
+                });
             }
         }
 
-        function updateTodayCount() {
-            document.getElementById('today-count').textContent = todayList.items.length;
+        function saveToHistory(name, data) {
+            let history = JSON.parse(localStorage.getItem('glossary_history') || '[]');
+            const newItem = { name, data, date: new Date().toLocaleDateString() };
+            history = [newItem, ...history.filter(h => h.name !== name)].slice(0, 5);
+            localStorage.setItem('glossary_history', JSON.stringify(history));
         }
 
-        function togglePane(id) {
-            document.querySelectorAll('.side-pane').forEach(p => {
-                if(p.id === id) p.classList.toggle('active');
-                else p.classList.remove('active');
+        function togglePane(id, show) { document.getElementById(id).classList.toggle('active', show); }
+        function linkify(text) { return text.replace(/(https?:\/\/[^\s]+)/g, (url) => `<a href="${url}" target="_blank">${url}</a>`); }
+
+        function openRowDetails(values) {
+            document.getElementById('det-en').textContent = values.en;
+            document.getElementById('det-de').textContent = values.de || '-';
+            document.getElementById('det-fr').textContent = values.fr || '-';
+            document.getElementById('det-cat').textContent = values.category || '-';
+            document.getElementById('det-def').innerHTML = values.definition ? linkify(values.definition) : 'No definition available.';
+            togglePane('details-pane', true);
+        }
+
+        function populateHeaderSelect() {
+            const sel = document.getElementById('header-select');
+            sel.innerHTML = '';
+            Object.keys(headerTranslations).forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k; opt.textContent = headerTranslations[k][currentMetaLang]; sel.appendChild(opt);
             });
         }
 
-        function toggleCol(col) {
-            document.getElementById('main-list').classList.toggle('hide-' + col);
+        function setMetaLang(lang) {
+            currentMetaLang = lang;
+            document.querySelectorAll('.lang-toggle-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === lang));
+            populateHeaderSelect();
+            document.querySelectorAll('#meta-table-body tr').forEach(tr => {
+                const type = tr.dataset.type; const num = tr.dataset.num || '';
+                tr.querySelector('.info-label').textContent = headerTranslations[type][lang] + (num ? ' ' + num : '');
+            });
         }
 
-        function toggleView(mode) {
-            const m = document.getElementById('main-section');
-            const t = document.getElementById('today-section');
-            m.classList.remove('hidden', 'full-width');
-            t.classList.remove('hidden', 'full-width');
+        function addMetaRow() {
+            const type = document.getElementById('header-select').value;
+            const table = document.getElementById('meta-table-body');
+            let num = ''; if(['opp', 'res', 'apl'].includes(type)) num = table.querySelectorAll(`tr[data-type="${type}"]`).length + 1;
+            const tr = document.createElement('tr');
+            tr.dataset.type = type; tr.dataset.num = num;
+            tr.innerHTML = `<td class="info-label">${headerTranslations[type][currentMetaLang]} ${num}</td><td><input class="input-inline-edit" placeholder="..."></td><td style="width:20px;"><button onclick="this.parentElement.parentElement.remove()" style="color:red; background:none; border:none; cursor:pointer;">×</button></td>`;
+            table.appendChild(tr);
+        }
+
+        function togglePatentInfo() {
+            const isHidden = document.getElementById('patent-info-wrapper').classList.toggle('hidden');
+            document.getElementById('patent-hidden-indicator').classList.toggle('hidden', !isHidden);
+        }
+
+        document.getElementById('master-file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            Papa.parse(file, { header: true, skipEmptyLines: true, complete: (r) => {
+                const clean = r.data.map(row => ({
+                    en: row.EN || row.en || '', de: row.DE || row.de || '', fr: row.FR || row.fr || '',
+                    definition: row.Definition || row.definition || '',
+                    category: (row.Category || row.category || '').replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).filter(s => s).join(', ')
+                }));
+                saveToHistory(file.name, clean); launchApp(clean);
+            }});
+        };
+
+        function launchApp(data) {
+            document.getElementById('upload-screen').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            document.querySelector('.pane-controls').classList.remove('hidden');
+            masterList = new List('main-section', { 
+                valueNames: ['en', 'de', 'fr', 'category', 'definition'], 
+                item: `<tr class="master-row"><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td><td class="category col-cat"></td></tr>` 
+            }, data);
+            
+            masterList.items.forEach(item => {
+                const v = item.values(); if (v.definition && v.definition.trim()) item.elm.querySelector('.en').innerHTML += '💡';
+                item.elm.onclick = () => openRowDetails(v);
+            });
+            const cats = [...new Set(data.flatMap(i => i.category.split(',').map(s => s.trim())))].filter(s => s).sort();
+            const filterEl = document.getElementById('master-cat-list'); filterEl.innerHTML = '';
+            cats.forEach(c => {
+                const label = document.createElement('label'); label.style.display = 'block'; label.innerHTML = `<input type="checkbox" value="${c}" class="cat-chk"> ${c}`;
+                label.querySelector('input').onchange = updateFilters; filterEl.appendChild(label);
+            });
+        }
+
+        function updateFilters() {
+            const sel = Array.from(document.querySelectorAll('.cat-chk:checked')).map(i => i.value);
+            const badge = document.getElementById('cat-badge-val');
+            if(sel.length > 0) { badge.classList.remove('hidden'); badge.textContent = sel.length; } else { badge.classList.add('hidden'); }
+            masterList.filter(item => sel.length === 0 || sel.every(s => item.values().category.includes(s)));
+        }
+
+        function resetCategories() { document.querySelectorAll('.cat-chk').forEach(c => c.checked = false); updateFilters(); }
+        function toggleCol(col, show) { document.getElementById('main-list').classList.toggle(`hide-${col}`, !show); }
+        function downloadMaster() { const csv = Papa.unparse(masterList.items.map(i => i.values())); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'glossary_export.csv'; a.click(); }
+
+        const dropArea = document.getElementById('drop-area');
+        dropArea.onclick = () => { let i = document.createElement('input'); i.type='file'; i.onchange=(e)=>handleToday(e.target.files[0]); i.click(); };
+        
+        dropArea.ondragover = (e) => { e.preventDefault(); e.stopPropagation(); };
+        dropArea.ondragenter = (e) => { e.preventDefault(); e.stopPropagation(); dropArea.classList.add('drag-over'); };
+        dropArea.ondragleave = (e) => { e.preventDefault(); e.stopPropagation(); dropArea.classList.remove('drag-over'); };
+        dropArea.ondrop = (e) => { 
+            e.preventDefault(); 
+            e.stopPropagation();
+            dropArea.classList.remove('drag-over');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleToday(e.dataTransfer.files[0]);
+            }
+        };
+
+        function handleToday(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'csv') {
+                Papa.parse(file, { header: true, skipEmptyLines: true, complete: (r) => {
+                    const norm = r.data.map(row => {
+                        let o = {}; Object.keys(row).forEach(k => { const l = k.toLowerCase(); if(l==='en'||l==='english') o.en=row[k]; if(l==='de'||l==='german') o.de=row[k]; if(l==='fr'||l==='french') o.fr=row[k]; });
+                        return o;
+                    });
+                    initToday(norm);
+                }});
+            } else if (ext === 'docx') {
+                const r = new FileReader(); r.onload = (e) => mammoth.convertToHtml({arrayBuffer: e.target.result}).then(res => {
+                    const temp = document.createElement('div'); temp.innerHTML = res.value; const rows = Array.from(temp.querySelectorAll('tr'));
+                    if (rows.length < 1) return; const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.innerText.trim().toLowerCase());
+                    initToday(rows.slice(1).map(tr => { let o = {}; tr.querySelectorAll('td').forEach((td, i) => { if(headers[i]) o[headers[i]] = td.innerText.trim(); }); return o; }));
+                }); r.readAsArrayBuffer(file);
+            }
+        }
+
+        function initToday(data) {
+            document.getElementById('drop-area').classList.add('hidden'); document.getElementById('today-list-container').classList.remove('hidden');
+            todayList = new List('today-section', { valueNames: ['en', 'de', 'fr'], item: `<tr onclick="togglePin(this)" style="cursor:pointer;"><td class="en"></td><td class="de"></td><td class="fr"></td></tr>` }, data);
+        }
+
+        function addNewTermPrompt() {
+            const en = prompt("Enter English Term:"); if (!en) return;
+            const de = prompt("Enter German Translation:"), fr = prompt("Enter French Translation:");
+            if (!todayList) initToday([{ en, de: de || '', fr: fr || '' }]); else todayList.add({ en, de: de || '', fr: fr || '' });
+        }
+
+        function togglePin(row) {
+            const item = { en: row.querySelector('.en').textContent, de: row.querySelector('.de').textContent, fr: row.querySelector('.fr').textContent };
+            const idx = pinnedItems.findIndex(i => i.en === item.en); if (idx > -1) pinnedItems.splice(idx, 1); else pinnedItems.push(item);
+            renderPinned();
+        }
+
+        function renderPinned() {
+            const area = document.getElementById('today-pinned-area'), body = document.getElementById('pinned-body');
+            body.innerHTML = ''; area.classList.toggle('hidden', !pinnedItems.length);
+            pinnedItems.forEach(item => {
+                const tr = document.createElement('tr'); tr.style.background = 'rgba(0,102,204,0.2)';
+                tr.onclick = () => { pinnedItems = pinnedItems.filter(i => i.en !== item.en); renderPinned(); };
+                tr.innerHTML = `<td style="width:33%;">📌 ${item.en}</td><td style="width:33%;">${item.de}</td><td style="width:33%;">${item.fr}</td>`;
+                body.appendChild(tr);
+            });
+        }
+
+        function setLayout(mode) {
+            const m = document.getElementById('main-section'), t = document.getElementById('today-section');
+            m.classList.remove('hidden', 'full-width'); t.classList.remove('hidden', 'full-width');
+            document.getElementById('main-list').classList.remove('hidden'); document.getElementById('legal-iframe-container').classList.add('hidden');
+            document.getElementById('main-title').textContent = 'Glossary';
             if(mode === 'master') { t.classList.add('hidden'); m.classList.add('full-width'); }
             if(mode === 'today') { m.classList.add('hidden'); t.classList.add('full-width'); }
         }
 
         function showLegal(url, title) {
-            document.getElementById('main-list').classList.add('hidden');
-            document.getElementById('legal-iframe-container').classList.remove('hidden');
-            document.getElementById('legal-frame').src = url;
-            document.getElementById('main-title').textContent = title;
+            document.getElementById('main-list').classList.add('hidden'); document.getElementById('legal-iframe-container').classList.remove('hidden');
+            document.getElementById('legal-frame').src = url; document.getElementById('main-title').textContent = title;
         }
 
-        function closeLegal() {
-            document.getElementById('legal-iframe-container').classList.add('hidden');
-            document.getElementById('main-list').classList.remove('hidden');
-            document.getElementById('main-title').textContent = 'Glossary';
+        function setTheme(t) { document.getElementById('today-section').className = 'theme-' + t; }
+        function toggleDrop(id, e) { e.stopPropagation(); const el = document.getElementById(id); const isVis = el.style.display === 'block'; document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none'); el.style.display = isVis ? 'none' : 'block'; }
+
+        function downloadToday() {
+            if (!todayList || todayList.items.length === 0) return;
+            const csv = Papa.unparse(todayList.items.map(i => i.values()));
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'today_glossary.csv'; a.click();
         }
 
-        function setTheme(t) {
-            document.getElementById('today-section').className = 'theme-' + t;
-        }
-
-        function toggleDrop(id, e) {
-            e.stopPropagation();
-            const el = document.getElementById(id);
-            const isVis = el.style.display === 'block';
-            document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
-            el.style.display = isVis ? 'none' : 'block';
-        }
-
-        function saveToHistory(name, data) {
-            let hist = JSON.parse(localStorage.getItem('epo_hist') || '[]');
-            hist = hist.filter(h => h.name !== name);
-            hist.unshift({name, data, date: new Date().toLocaleDateString()});
-            localStorage.setItem('epo_hist', JSON.stringify(hist.slice(0, 5)));
-            loadHistory();
-        }
-
-        function loadHistory() {
-            const hist = JSON.parse(localStorage.getItem('epo_hist') || '[]');
-            const container = document.getElementById('history-list');
-            const paneContainer = document.getElementById('pane-history-list');
-            const html = hist.map(h => `
-                <div class="recent-item" onclick='loadFromHistory(${JSON.stringify(h.data)})'>
-                    <span>${h.name}</span>
-                    <small>${h.date}</small>
-                </div>
-            `).join('');
-            container.innerHTML = html;
-            paneContainer.innerHTML = html;
-        }
-
-        function loadFromHistory(data) {
-            masterData = data;
-            initLists();
-            document.getElementById('landing-screen').classList.add('hidden');
-            document.getElementById('view-controls').classList.remove('hidden');
-        }
-
-        // EXPORT FUNCTION ADDED HERE
-        function exportToday() {
-            const rows = Array.from(document.querySelectorAll('#today-section .list-table tbody tr'));
-            const data = rows.map(r => ({
-                English: r.querySelector('.en')?.textContent || "",
-                German: r.querySelector('.de')?.textContent || "",
-                French: r.querySelector('.fr')?.textContent || ""
-            }));
-            if (data.length === 0) return alert("No terms in session to export.");
-            const csv = Papa.unparse(data);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", `EPO_Today_Export_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        window.onload = loadHistory;
+        window.onload = () => { loadHistory(); populateHeaderSelect(); ['pat', 'app', 'tit'].forEach(id => { document.getElementById('header-select').value = id; addMetaRow(); }); };
         document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
         
         document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value, ['en', 'de', 'fr']);
