@@ -68,10 +68,6 @@
         .today-sticky-header { position: sticky; top: 0; z-index: 100; background: inherit; padding-bottom: 10px; }
         #today-scroll-area { overflow-y: auto; flex-grow: 1; }
 
-        .full-width #today-body, .full-width #pinned-body { display: block; columns: 2; column-gap: 50px; column-rule: 2px solid rgba(128,128,128,0.5); }
-        .full-width #today-body tr, .full-width #pinned-body tr { display: flex; width: 100%; break-inside: avoid; border-bottom: 1px solid rgba(128,128,128,0.2); }
-        .full-width #today-body td, .full-width #pinned-body td { flex: 1; padding: 10px 5px; }
-
         .today-header-container { margin-bottom: 15px; border-bottom: 1px solid rgba(128,128,128,0.3); padding-bottom: 10px; }
         .patent-info-table { width: 100%; font-size: 12px; border-collapse: collapse; background: rgba(0,0,0,0.1); }
         .patent-info-table td { padding: 6px 10px; border: 1px solid rgba(128,128,128,0.2); }
@@ -81,13 +77,12 @@
         .list-table { width: 100%; border-collapse: collapse; background: white; }
         #today-section .list-table { background: transparent; color: inherit; }
         .list-table th, .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); text-align: left; font-size: 13px; }
+        
         #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
 
-        /* Floating Pane Controls */
-        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 3000; display: flex; gap: 10px; background: rgba(255,255,255,0.95); padding: 10px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid var(--border-color); align-items: center; }
-        .toggle-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; font-size: 11px; font-weight: 700; transition: all 0.2s; background: white; }
-        .btn-gl { background: #7f8c8d !important; color: white !important; }
-        .btn-epc { background: #c0392b !important; color: white !important; }
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-options { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px; padding: 10px; }
+        .dropdown-options label { display: block; padding: 5px; font-size: 12px; cursor: pointer; color: black; }
 
         #landing-screen { position: absolute; inset: 0; background: var(--primary-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
         .upload-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px; }
@@ -95,9 +90,6 @@
         .file-input-wrapper:hover { border-color: var(--accent-blue); background: #f8faff; }
         .recent-list { margin-top: 25px; text-align: left; }
         .recent-item { padding: 12px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); }
-        .dropdown { position: relative; display: inline-block; }
-        .dropdown-options { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px; padding: 10px; }
-        .dropdown-options label { display: block; padding: 5px; font-size: 12px; cursor: pointer; color: black; }
     </style>
 </head>
 <body>
@@ -114,12 +106,6 @@
             </div>
             <div id="history-list" class="recent-list"></div>
         </div>
-    </div>
-
-    <div class="pane-controls">
-        <div style="font-size: 10px; color: #65676b; margin-right: 5px;">EXTRAS:</div>
-        <button class="toggle-btn btn-gl" onclick="showLegal('https://www.epo.org/en/legal/glossary', 'EPO Glossary')">EPO GLOSSARY</button>
-        <button class="toggle-btn btn-epc" onclick="showLegal('https://www.epo.org/en/legal/epc', 'EPC ARTICLES')">EPC ARTICLES</button>
     </div>
 
     <div id="app-wrapper">
@@ -168,11 +154,11 @@
                 </table>
             </div>
 
-            <div id="legal-iframe-container" class="hidden" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <div id="legal-iframe-container" class="hidden">
                 <div style="padding: 10px; background: #eee; display: flex; justify-content: flex-end;">
                     <button class="btn-ui" onclick="closeLegal()">✕ Close Legal View</button>
                 </div>
-                <iframe id="legal-frame" style="flex:1; border:none; width:100%;"></iframe>
+                <iframe id="legal-frame" style="flex:1; border:none; width:100%; height:100%;"></iframe>
             </div>
         </div>
 
@@ -187,17 +173,17 @@
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                     <input type="search" id="today-search" placeholder="Search session..." style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
                     <button class="btn-ui btn-download" onclick="exportToday()">Export CSV</button>
                 </div>
 
                 <div class="today-header-container">
-                    <div id="today-meta-rows"></div>
-                    <div style="display: flex; gap: 5px; margin-top: 10px;">
-                        <select id="header-select" class="btn-ui" style="flex:1;"></select>
-                        <button class="btn-ui" onclick="addMetaRow()">+ Row</button>
-                    </div>
+                    <table class="patent-info-table">
+                        <tr><td class="info-label">Patent #</td><td><input type="text" class="input-inline-edit" placeholder="EP 1234567"></td></tr>
+                        <tr><td class="info-label">Applicant</td><td><input type="text" class="input-inline-edit" placeholder="Company Name"></td></tr>
+                        <tr><td class="info-label">Title</td><td><input type="text" class="input-inline-edit" placeholder="Method of..."></td></tr>
+                    </table>
                 </div>
             </div>
 
@@ -218,20 +204,22 @@
     <div id="settings-pane" class="side-pane">
         <div class="pane-header"><h3>Settings</h3><button class="close-pane-btn" onclick="togglePane('settings-pane')">×</button></div>
         <div style="margin-top: 20px;">
-            <p><strong>Version:</strong> Pro Mode 34.1 (Stable + Export)</p>
+            <p><strong>External Resources</strong></p>
+            <button class="btn-ui" style="width: 100%; margin-bottom: 10px; background:#7f8c8d; color:white;" onclick="showLegal('https://www.epo.org/en/legal/glossary', 'EPO Glossary')">EPO Glossary</button>
+            <button class="btn-ui" style="width: 100%; background:#c0392b; color:white;" onclick="showLegal('https://www.epo.org/en/legal/epc', 'EPC Articles')">EPC Legal Texts</button>
         </div>
     </div>
 
     <script>
         let masterList, todayList;
         let masterData = [];
-        const metaFields = { pat: "Patent #", app: "Applicant", tit: "Title", inv: "Inventor", ref: "Reference", date: "Date" };
 
         function handleUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
             Papa.parse(file, {
-                header: true, skipEmptyLines: true,
+                header: true,
+                skipEmptyLines: true,
                 complete: function(results) {
                     masterData = results.data;
                     initLists();
@@ -245,22 +233,34 @@
         function initLists() {
             masterList = new List('main-list', {
                 valueNames: ['en', 'de', 'fr', 'cat'],
-                item: `<tr><td class="en col-en"></td><td class="de col-de"></td><td class="fr col-fr"></td><td class="cat col-cat"></td><td><button class="btn-ui" onclick="addToToday(this)">+</button></td></tr>`
+                item: `<tr>
+                    <td class="en col-en"></td>
+                    <td class="de col-de"></td>
+                    <td class="fr col-fr"></td>
+                    <td class="cat col-cat"></td>
+                    <td><button class="btn-ui" onclick="addToToday(this)">+</button></td>
+                </tr>`
             }, masterData);
 
             todayList = new List('today-section', {
                 valueNames: ['en', 'de', 'fr'],
-                item: `<tr><td class="en"></td><td class="de"></td><td class="fr"></td><td><button class="btn-ui" style="opacity:0.5" onclick="togglePin(this)">📌</button></td></tr>`
+                item: `<tr>
+                    <td class="en"></td>
+                    <td class="de"></td>
+                    <td class="fr"></td>
+                    <td><button class="btn-ui" onclick="togglePin(this)">📌</button></td>
+                </tr>`
             });
         }
 
         function addToToday(btn) {
             const row = btn.closest('tr');
-            todayList.add({
+            const item = {
                 en: row.querySelector('.en').textContent,
                 de: row.querySelector('.de').textContent,
                 fr: row.querySelector('.fr').textContent
-            });
+            };
+            todayList.add(item);
             updateTodayCount();
         }
 
@@ -282,7 +282,10 @@
         }
 
         function togglePane(id) {
-            document.querySelectorAll('.side-pane').forEach(p => p.id === id ? p.classList.toggle('active') : p.classList.remove('active'));
+            document.querySelectorAll('.side-pane').forEach(p => {
+                if(p.id === id) p.classList.toggle('active');
+                else p.classList.remove('active');
+            });
         }
 
         function toggleCol(col) {
@@ -290,43 +293,12 @@
         }
 
         function toggleView(mode) {
-            const m = document.getElementById('main-section'), t = document.getElementById('today-section');
-            m.classList.remove('hidden', 'full-width'); t.classList.remove('hidden', 'full-width');
+            const m = document.getElementById('main-section');
+            const t = document.getElementById('today-section');
+            m.classList.remove('hidden', 'full-width');
+            t.classList.remove('hidden', 'full-width');
             if(mode === 'master') { t.classList.add('hidden'); m.classList.add('full-width'); }
             if(mode === 'today') { m.classList.add('hidden'); t.classList.add('full-width'); }
-        }
-
-        function addMetaRow() {
-            const sel = document.getElementById('header-select');
-            const container = document.getElementById('today-meta-rows');
-            const table = document.createElement('table');
-            table.className = 'patent-info-table';
-            table.innerHTML = `<tr><td class="info-label">${metaFields[sel.value]}</td><td><input type="text" class="input-inline-edit" placeholder="Enter info..."></td><td style="width:30px"><button onclick="this.closest('table').remove()" style="background:none; border:none; color:red; cursor:pointer;">×</button></td></tr>`;
-            container.appendChild(table);
-        }
-
-        function populateHeaderSelect() {
-            const sel = document.getElementById('header-select');
-            Object.keys(metaFields).forEach(k => {
-                let opt = document.createElement('option'); opt.value = k; opt.textContent = metaFields[k]; sel.appendChild(opt);
-            });
-        }
-
-        function exportToday() {
-            const rows = Array.from(document.querySelectorAll('#today-section tbody tr'));
-            const data = rows.map(r => ({
-                English: r.querySelector('.en')?.textContent || "",
-                German: r.querySelector('.de')?.textContent || "",
-                French: r.querySelector('.fr')?.textContent || ""
-            }));
-            const csv = Papa.unparse(data);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", `Today_Session_${new Date().toLocaleDateString()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
 
         function showLegal(url, title) {
@@ -342,7 +314,9 @@
             document.getElementById('main-title').textContent = 'Glossary';
         }
 
-        function setTheme(t) { document.getElementById('today-section').className = 'theme-' + t; }
+        function setTheme(t) {
+            document.getElementById('today-section').className = 'theme-' + t;
+        }
 
         function toggleDrop(id, e) {
             e.stopPropagation();
@@ -355,7 +329,7 @@
         function saveToHistory(name, data) {
             let hist = JSON.parse(localStorage.getItem('epo_hist') || '[]');
             hist = hist.filter(h => h.name !== name);
-            hist.unshift({ name, data, date: new Date().toLocaleDateString() });
+            hist.unshift({name, data, date: new Date().toLocaleDateString()});
             localStorage.setItem('epo_hist', JSON.stringify(hist.slice(0, 5)));
             loadHistory();
         }
@@ -364,21 +338,45 @@
             const hist = JSON.parse(localStorage.getItem('epo_hist') || '[]');
             const container = document.getElementById('history-list');
             const paneContainer = document.getElementById('pane-history-list');
-            const html = hist.map(h => `<div class="recent-item" onclick='loadFromHistory(${JSON.stringify(h.data)})'><span>${h.name}</span><small>${h.date}</small></div>`).join('');
-            container.innerHTML = html; paneContainer.innerHTML = html;
+            const html = hist.map(h => `
+                <div class="recent-item" onclick='loadFromHistory(${JSON.stringify(h.data)})'>
+                    <span>${h.name}</span>
+                    <small>${h.date}</small>
+                </div>
+            `).join('');
+            container.innerHTML = html;
+            paneContainer.innerHTML = html;
         }
 
         function loadFromHistory(data) {
-            masterData = data; initLists();
+            masterData = data;
+            initLists();
             document.getElementById('landing-screen').classList.add('hidden');
             document.getElementById('view-controls').classList.remove('hidden');
         }
 
-        window.onload = () => {
-            loadHistory(); populateHeaderSelect();
-            ['pat', 'app', 'tit'].forEach(id => { document.getElementById('header-select').value = id; addMetaRow(); });
-        };
+        // EXPORT FUNCTION ADDED HERE
+        function exportToday() {
+            const rows = Array.from(document.querySelectorAll('#today-section .list-table tbody tr'));
+            const data = rows.map(r => ({
+                English: r.querySelector('.en')?.textContent || "",
+                German: r.querySelector('.de')?.textContent || "",
+                French: r.querySelector('.fr')?.textContent || ""
+            }));
+            if (data.length === 0) return alert("No terms in session to export.");
+            const csv = Papa.unparse(data);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `EPO_Today_Export_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        window.onload = loadHistory;
         document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+        
         document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value, ['en', 'de', 'fr']);
         document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
     </script>
