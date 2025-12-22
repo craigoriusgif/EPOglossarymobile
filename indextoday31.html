@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EPO Glossary - Pro Mode</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --today-bg: #2d3436;
+            --today-text: #dfe6e9;
+            --border-color: #e4e6eb;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --text-main: #1c1e21;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; position: relative; }
+        #main-section { flex: 2; padding: 15px; overflow: hidden; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; min-width: 0; }
+        #today-section { flex: 1.2; padding: 15px; overflow: hidden; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: all 0.3s ease; }
+
+        /* Themes */
+        #today-section.theme-light { background: #ffffff !important; color: #1c1e21 !important; }
+        #today-section.theme-dark { background: #2d3436 !important; color: #dfe6e9 !important; }
+        #today-section.theme-sepia { background: #f4ecd8 !important; color: #5b4636 !important; }
+
+        .hidden { display: none !important; }
+        .full-width { flex: 1 0 100% !important; border: none !important; }
+
+        /* Slide Panes */
+        .side-pane { 
+            position: absolute; left: 0; top: 0; bottom: 0; 
+            width: 380px; background: white; z-index: 2000; 
+            box-shadow: 5px 0 15px rgba(0,0,0,0.15); 
+            transform: translateX(-100%); transition: transform 0.3s ease-in-out;
+            padding: 25px; display: flex; flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .side-pane.active { transform: translateX(0); }
+        .pane-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .close-pane-btn { background: #f3f4f6; border: none; font-size: 24px; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 8px; flex-shrink: 0; min-width: 0; }
+        .header-center-filters { display: flex; flex-grow: 1; gap: 6px; align-items: center; min-width: 0; }
+        
+        /* Search Bar with X */
+        input[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            height: 16px; width: 16px;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E");
+            cursor: pointer;
+        }
+        input[type="search"] { height: 40px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; min-width: 0; }
+        
+        .btn-ui { height: 40px; padding: 0 8px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; color: #1c1e21; font-weight: 500; }
+        .btn-download { background: var(--accent-green) !important; color: white !important; border: none !important; }
+        .badge-inline { background: var(--accent-blue); color: white; border-radius: 10px; padding: 1px 7px; font-size: 10px; margin-left: 4px; }
+
+        /* Today Section Styling */
+        #today-list-container { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
+        .today-sticky-header { position: sticky; top: 0; z-index: 100; background: inherit; padding-bottom: 10px; }
+        #today-scroll-area { overflow-y: auto; flex-grow: 1; }
+
+        .list-table { width: 100%; border-collapse: collapse; background: white; }
+        #today-section .list-table { background: transparent; color: inherit; }
+        .list-table th, .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); text-align: left; font-size: 13px; }
+
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 3000; display: flex; gap: 10px; background: rgba(255,255,255,0.95); padding: 10px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid var(--border-color); align-items: center; }
+        .toggle-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; font-size: 11px; font-weight: 700; transition: all 0.2s; background: white; }
+    </style>
+</head>
+<body>
+
+    <div id="help-pane" class="side-pane">
+        <div class="pane-header"><h2>User Guide</h2><button class="close-pane-btn" onclick="togglePane('help-pane', false)">&times;</button></div>
+        <div style="font-size: 14px; line-height: 1.6;">
+            <p><strong>🔍 Search:</strong> Filter terms in any language instantly.</p>
+            <p><strong>📌 Pinning:</strong> Click rows in the "Today" list to keep terms at the top.</p>
+        </div>
+    </div>
+
+    <div id="details-pane" class="side-pane">
+        <div class="pane-header"><h2 id="det-en" style="color:var(--accent-blue); margin:0;">Term</h2><button class="close-pane-btn" onclick="togglePane('details-pane', false)">&times;</button></div>
+        <div id="details-content">
+            <div style="margin-bottom:20px;"><h4>Definition</h4><p id="det-def">-</p></div>
+            <div style="margin-bottom:20px;"><h4>German (DE)</h4><p id="det-de">-</p></div>
+            <div style="margin-bottom:20px;"><h4>French (FR)</h4><p id="det-fr">-</p></div>
+        </div>
+    </div>
+
+    <div id="upload-screen" style="max-width: 450px; margin: 10vh auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <h1>Glossary Pro</h1>
+        <div style="position:relative; margin-bottom: 20px;">
+            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white; height:50px; font-size:14px;">Load Master CSV</button>
+            <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+        </div>
+    </div>
+
+    <div id="app-wrapper" class="hidden">
+        <section id="main-section">
+            <div class="header-with-logo">
+                <h2 id="main-title" style="margin:0; font-size:18px;">Glossary</h2>
+                <div class="header-center-filters">
+                    <input type="search" id="master-search" placeholder="Search Master..." onsearch="masterList.search(this.value)">
+                    <button class="btn-ui" onclick="togglePane('help-pane', true)">❓ Help</button>
+                </div>
+            </div>
+            <div id="main-scroll-area" style="flex-grow:1; overflow-y:auto;">
+                <div id="main-list">
+                    <table class="list-table">
+                        <thead><tr><th>English</th><th>German</th><th>French</th><th>Category</th></tr></thead>
+                        <tbody class="list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="today-section" class="theme-dark">
+            <div id="drop-area" style="border: 2px dashed rgba(128,128,128,0.5); padding: 20px; text-align: center; border-radius: 8px;">Drop Case CSV/Docx</div>
+            <div id="today-list-container" class="hidden">
+                <div class="today-sticky-header">
+                    <input type="search" id="today-search" style="width:100%;" placeholder="Filter today's terms..." onsearch="todayList.search(this.value)">
+                    <div id="today-pinned-area" class="hidden"><table class="list-table"><tbody id="pinned-body"></tbody></table></div>
+                </div>
+                <div id="today-scroll-area"><table class="list-table"><tbody id="today-body" class="list"></tbody></table></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="pane-controls">
+        <button class="toggle-btn" onclick="setLayout('split')">Split View</button>
+        <button class="toggle-btn" onclick="setLayout('master')">Main Only</button>
+        <button class="toggle-btn" onclick="setLayout('today')">Today Only</button>
+    </div>
+
+    <script>
+        let masterList, todayList, pinnedItems = [];
+
+        function togglePane(id, show) { document.getElementById(id).classList.toggle('active', show); }
+
+        function openRowDetails(v) {
+            document.getElementById('det-en').textContent = v.en;
+            document.getElementById('det-de').textContent = v.de || '-';
+            document.getElementById('det-fr').textContent = v.fr || '-';
+            document.getElementById('det-def').textContent = v.definition || 'No definition.';
+            togglePane('details-pane', true);
+        }
+
+        document.getElementById('master-file-input').onchange = (e) => {
+            Papa.parse(e.target.files[0], {
+                header: true, skipEmptyLines: true,
+                complete: (r) => {
+                    const clean = r.data.map(row => ({
+                        en: row.EN || row.en || '', de: row.DE || row.de || '', fr: row.FR || row.fr || '',
+                        definition: row.Definition || row.definition || '',
+                        category: (row.Category || row.category || '')
+                    }));
+                    launchApp(clean);
+                }
+            });
+        };
+
+        function launchApp(data) {
+            document.getElementById('upload-screen').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            masterList = new List('main-section', {
+                valueNames: ['en', 'de', 'fr', 'category'],
+                item: `<tr><td class="en"></td><td class="de"></td><td class="fr"></td><td class="category"></td></tr>`
+            }, data);
+            masterList.items.forEach(item => {
+                item.elm.onclick = () => openRowDetails(item.values());
+            });
+        }
+
+        function setLayout(mode) {
+            const m = document.getElementById('main-section'), t = document.getElementById('today-section');
+            m.classList.remove('hidden', 'full-width'); t.classList.remove('hidden', 'full-width');
+            if(mode === 'master') { t.classList.add('hidden'); m.classList.add('full-width'); }
+            if(mode === 'today') { m.classList.add('hidden'); t.classList.add('full-width'); }
+        }
+
+        document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value);
+        document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
+    </script>
+</body>
+</html>
