@@ -238,12 +238,13 @@
 
         const headerTranslations = {
             pat: { en: "Patent Number", de: "Patentnummer", fr: "Numéro de brevet" },
-            app: { en: "Application Number", de: "Anmelnummer", fr: "Numéro de dépôt" },
+            app: { en: "Application Number", de: "Anmeldenummer", fr: "Numéro de dépôt" },
             tit: { en: "Title", de: "Titel", fr: "Titre" },
             pri: { en: "Priority date", de: "Prioritätstag", fr: "Date de priorité" },
             pro: { en: "Proprietor", de: "Patentinhaber", fr: "Titulaire" },
-            opp: { en: "Opponent", de: "Einsprechender", fr: "Opposant" },
-            res: { en: "Respondent", de: "Beschwerdegegner", fr: "Intimé" }
+            opp: { en: "Opponent", de: "Einsprechender", fr: "Opposant(e)" },
+            res: { en: "Respondent", de: "Beschwerdegegner", fr: "Intimé(e)" }
+            apl: { en: "Appellant", de: "Beschwerdeführer", fr: "Requérant(e)" }
         };
 
         function loadHistory() {
@@ -304,7 +305,7 @@
         function addMetaRow() {
             const type = document.getElementById('header-select').value;
             const table = document.getElementById('meta-table-body');
-            let num = ''; if(['opp', 'res'].includes(type)) num = table.querySelectorAll(`tr[data-type="${type}"]`).length + 1;
+            let num = ''; if(['opp', 'res', 'apl'].includes(type)) num = table.querySelectorAll(`tr[data-type="${type}"]`).length + 1;
             const tr = document.createElement('tr');
             tr.dataset.type = type; tr.dataset.num = num;
             tr.innerHTML = `<td class="info-label">${headerTranslations[type][currentMetaLang]} ${num}</td><td><input class="input-inline-edit" placeholder="..."></td><td style="width:20px;"><button onclick="this.parentElement.parentElement.remove()" style="color:red; background:none; border:none; cursor:pointer;">×</button></td>`;
