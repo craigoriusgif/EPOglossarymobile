@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EPO Interpreter Dashboard - Responsive</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --today-bg: #2d3436;
+            --today-text: #dfe6e9;
+            --border-color: #e4e6eb;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --text-main: #1c1e21;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; position: relative; }
+        #main-section { flex: 2; padding: 15px; overflow: hidden; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; min-width: 0; }
+        #today-section { flex: 1.2; padding: 15px; overflow: hidden; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: all 0.3s ease; }
+
+        /* Desktop Themes */
+        #today-section.theme-light { background: #ffffff !important; color: #1c1e21 !important; }
+        #today-section.theme-dark { background: #2d3436 !important; color: #dfe6e9 !important; }
+        #today-section.theme-sepia { background: #f4ecd8 !important; color: #5b4636 !important; }
+
+        .hidden { display: none !important; }
+        .full-width { flex: 1 0 100% !important; border: none !important; }
+
+        /* Side Panes */
+        .side-pane { 
+            position: absolute; left: 0; top: 0; bottom: 0; 
+            width: 380px; background: white; z-index: 2000; 
+            box-shadow: 5px 0 15px rgba(0,0,0,0.15); 
+            transform: translateX(-100%); transition: transform 0.3s ease-in-out;
+            padding: 25px; display: flex; flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .side-pane.active { transform: translateX(0); }
+        .pane-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .close-pane-btn { background: #f3f4f6; border: none; font-size: 24px; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+
+        /* Header UI Elements */
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 8px; flex-shrink: 0; min-width: 0; }
+        .header-center-filters { display: flex; flex-grow: 1; gap: 6px; align-items: center; min-width: 0; }
+        
+        input[type="search"], .input-today-header { height: 40px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; min-width: 0; }
+        .btn-ui { height: 40px; padding: 0 8px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; color: #1c1e21; font-weight: 500; }
+        .btn-download { background: var(--accent-green) !important; color: white !important; border: none !important; }
+
+        /* Lists & Tables */
+        #today-list-container { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
+        #today-scroll-area { overflow-y: auto; flex-grow: 1; }
+        .list-table { width: 100%; border-collapse: collapse; background: white; }
+        #today-section .list-table { background: transparent; color: inherit; }
+        .list-table th, .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); text-align: left; font-size: 13px; }
+
+        /* Mobile specific adjustments (from indextoday59 (1)) */
+        @media only screen and (max-width: 768px) {
+            #btn-split-view, #btn-gl, #btn-cl, #btn-epc, .pane-controls span {
+                display: none !important;
+            }
+            .header-with-logo {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .header-center-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #master-search {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            .header-center-filters-row {
+                display: flex;
+                gap: 4px;
+                width: 100%;
+            }
+            #app-wrapper {
+                flex-direction: column;
+            }
+            #main-section, #today-section {
+                flex: none;
+                height: 50vh;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+        <main id="main-section">
+            <header class="header-with-logo">
+                <div class="header-center-filters">
+                    <input type="search" id="master-search" placeholder="Search Master Glossary (EN, DE, FR)...">
+                    <div class="header-center-filters-row">
+                        <select id="cat-filter" class="input-today-header" onchange="filterByCategory()">
+                            <option value="all">All Categories</option>
+                        </select>
+                        <button class="btn-ui" onclick="togglePane('help-pane', true)">❓ Guide</button>
+                    </div>
+                </div>
+            </header>
+
+            <div id="master-list-container" style="overflow-y: auto; flex-grow: 1;">
+                <table class="list-table">
+                    <thead>
+                        <tr>
+                            <th class="sort" data-sort="en">English</th>
+                            <th class="sort" data-sort="de">Deutsch</th>
+                            <th class="sort" data-sort="fr">Français</th>
+                        </tr>
+                    </thead>
+                    <tbody class="list" id="master-body">
+                        </tbody>
+                </table>
+            </div>
+        </main>
+
+        <section id="today-section">
+            <div class="header-with-logo">
+                <input type="search" id="today-search" placeholder="Filter today's terms..." style="flex-grow: 1;">
+                <button class="btn-ui btn-download" onclick="downloadToday()">💾 CSV</button>
+            </div>
+            <div id="today-scroll-area">
+                <table class="list-table">
+                    <tbody class="list" id="today-body">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    </body>
+</html>
