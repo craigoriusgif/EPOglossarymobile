@@ -68,7 +68,7 @@
         .today-sticky-header { position: sticky; top: 0; z-index: 100; background: inherit; padding-bottom: 10px; }
         #today-scroll-area { overflow-y: auto; flex-grow: 1; }
 
-        /* Add Term Box Styles */
+        /* Styles for the inline 'Add Term' box */
         #add-term-box { 
             background: rgba(255,255,255,0.05); 
             border: 1px solid rgba(128,128,128,0.3); 
@@ -88,7 +88,7 @@
             color: inherit; 
             font-size: 13px;
         }
-        .theme-light .add-term-grid input { background: #fff; }
+        .theme-light .add-term-grid input { background: #fff; color: #000; }
 
         .full-width #today-body, .full-width #pinned-body { display: block; columns: 2; column-gap: 50px; column-rule: 2px solid rgba(128,128,128,0.5); }
         .full-width #today-body tr, .full-width #pinned-body tr { display: flex; width: 100%; break-inside: avoid; border-bottom: 1px solid rgba(128,128,128,0.2); }
@@ -105,23 +105,17 @@
         .list-table th, .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); text-align: left; font-size: 13px; }
         #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
 
-        .recent-list { margin-top: 25px; text-align: left; }
-        .recent-item { padding: 12px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); }
-        .recent-item:hover { background: #f9f9f9; }
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-options { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px; padding: 10px; }
+        .dropdown-options label { display: block; padding: 5px; font-size: 12px; cursor: pointer; color: black; }
 
         /* Landing UI */
         #landing-screen { position: absolute; inset: 0; background: var(--primary-bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
         .upload-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px; }
         .file-input-wrapper { border: 2px dashed #d1d5db; border-radius: 12px; padding: 40px 20px; margin: 20px 0; cursor: pointer; transition: all 0.2s; }
         .file-input-wrapper:hover { border-color: var(--accent-blue); background: #f8faff; }
-
-        /* Legal Iframe */
-        #legal-iframe-container { flex: 1; display: flex; flex-direction: column; height: 100%; }
-        #legal-frame { flex: 1; border: none; width: 100%; }
-
-        .dropdown { position: relative; display: inline-block; }
-        .dropdown-options { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px; padding: 10px; }
-        .dropdown-options label { display: block; padding: 5px; font-size: 12px; cursor: pointer; }
+        .recent-list { margin-top: 25px; text-align: left; }
+        .recent-item { padding: 12px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -151,8 +145,8 @@
                 <div class="header-center-filters">
                     <div id="view-controls" class="hidden" style="display: flex; gap: 4px;">
                         <button class="btn-ui" onclick="toggleView('split')">Split View</button>
-                        <button class="btn-ui" onclick="toggleView('master')">Main only</button>
-                        <button class="btn-ui" onclick="toggleView('today')">Today pane</button>
+                        <button class="btn-ui" onclick="toggleView('master')">Main Only</button>
+                        <button class="btn-ui" onclick="toggleView('today')">Today Only</button>
                     </div>
 
                     <input type="search" id="master-search" placeholder="Search Master..." style="flex-grow: 1;">
@@ -193,7 +187,7 @@
                 <div style="padding: 10px; background: #eee; display: flex; justify-content: flex-end;">
                     <button class="btn-ui" onclick="closeLegal()">✕ Close Legal View</button>
                 </div>
-                <iframe id="legal-frame"></iframe>
+                <iframe id="legal-frame" style="flex:1; border:none; width:100%; height:100%;"></iframe>
             </div>
         </div>
 
@@ -255,8 +249,8 @@
         <div class="pane-header"><h3>Settings</h3><button class="close-pane-btn" onclick="togglePane('settings-pane')">×</button></div>
         <div style="margin-top: 20px;">
             <p><strong>Resources</strong></p>
-            <button class="btn-ui" style="width: 100%; margin-bottom: 10px; background: #7f8c8d; color: white;" onclick="showLegal('https://www.epo.org/en/legal/glossary', 'EPO Glossary')">EPO Glossary (External)</button>
-            <button class="btn-ui" style="width: 100%; background: #c0392b; color: white;" onclick="showLegal('https://www.epo.org/en/legal/epc', 'EPC Articles')">EPC Legal Texts</button>
+            <button class="btn-ui" style="width: 100%; margin-bottom: 10px; background:#7f8c8d; color:white;" onclick="showLegal('https://www.epo.org/en/legal/glossary', 'EPO Glossary')">EPO Glossary (External)</button>
+            <button class="btn-ui" style="width: 100%; background:#c0392b; color:white;" onclick="showLegal('https://www.epo.org/en/legal/epc', 'EPC Articles')">EPC Legal Texts</button>
         </div>
     </div>
 
@@ -279,6 +273,7 @@
                     initLists();
                     saveToHistory(file.name, masterData);
                     document.getElementById('landing-screen').classList.add('hidden');
+                    // Reveal View Controls only after upload
                     document.getElementById('view-controls').classList.remove('hidden');
                 }
             });
@@ -318,6 +313,7 @@
             updateTodayCount();
         }
 
+        // Script logic for adding terms manually
         function addNewTerm() {
             const en = document.getElementById('add-en').value;
             const de = document.getElementById('add-de').value;
@@ -423,11 +419,12 @@
 
         function exportToday() {
             const rows = Array.from(document.querySelectorAll('#today-section tbody tr'));
-            const csv = Papa.unparse(rows.map(r => ({
+            const csvData = rows.map(r => ({
                 English: r.querySelector('.en').textContent,
                 German: r.querySelector('.de').textContent,
                 French: r.querySelector('.fr').textContent
-            })));
+            }));
+            const csv = Papa.unparse(csvData);
             const blob = new Blob([csv], {type: 'text/csv'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -438,6 +435,7 @@
 
         window.onload = loadHistory;
         document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+        
         document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value, ['en', 'de', 'fr']);
         document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
     </script>
