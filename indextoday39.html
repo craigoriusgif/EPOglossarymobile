@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EPO Glossary - Pro Mode</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --today-bg: #2d3436;
+            --today-text: #dfe6e9;
+            --border-color: #e4e6eb;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --text-main: #1c1e21;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; position: relative; }
+        #main-section { flex: 2; padding: 15px; overflow: hidden; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; min-width: 0; }
+        #today-section { flex: 1.2; padding: 15px; overflow: hidden; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: all 0.3s ease; }
+
+        #today-section.theme-light { background: #ffffff !important; color: #1c1e21 !important; }
+        #today-section.theme-dark { background: #2d3436 !important; color: #dfe6e9 !important; }
+        #today-section.theme-sepia { background: #f4ecd8 !important; color: #5b4636 !important; }
+
+        .hidden { display: none !important; }
+        .full-width { flex: 1 0 100% !important; border: none !important; }
+
+        .side-pane { 
+            position: absolute; left: 0; top: 0; bottom: 0; 
+            width: 380px; background: white; z-index: 2000; 
+            box-shadow: 5px 0 15px rgba(0,0,0,0.15); 
+            transform: translateX(-100%); transition: transform 0.3s ease-in-out;
+            padding: 25px; display: flex; flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .side-pane.active { transform: translateX(0); }
+        .pane-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .close-pane-btn { background: #f3f4f6; border: none; font-size: 24px; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 8px; flex-shrink: 0; min-width: 0; }
+        .header-center-filters { display: flex; flex-grow: 1; gap: 6px; align-items: center; min-width: 0; }
+        
+        input[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            height: 16px; width: 16px;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E");
+            cursor: pointer;
+        }
+        input[type="search"] { height: 40px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; min-width: 0; }
+        
+        .btn-ui { height: 40px; padding: 0 8px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; color: #1c1e21; font-weight: 500; }
+        .btn-download { background: var(--accent-green) !important; color: white !important; border: none !important; }
+        .badge-inline { background: var(--accent-blue); color: white; border-radius: 10px; padding: 1px 7px; font-size: 10px; margin-left: 4px; }
+
+        /* Inline Add Box Styling */
+        #add-term-box { 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(128,128,128,0.3); 
+            border-radius: 8px; 
+            padding: 12px; 
+            margin-bottom: 15px; 
+        }
+        .theme-light #add-term-box { background: #f8f9fa; }
+        .add-term-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .add-term-grid label { font-size: 10px; font-weight: bold; opacity: 0.7; margin-bottom: 4px; display: block; }
+        .add-term-grid input { 
+            width: 100%; 
+            padding: 8px; 
+            border-radius: 4px; 
+            border: 1px solid rgba(128,128,128,0.4); 
+            background: rgba(255,255,255,0.1); 
+            color: inherit; 
+            font-size: 13px;
+        }
+        .theme-light .add-term-grid input { background: #fff; color: #000; }
+
+        #today-list-container { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
+        .today-sticky-header { position: sticky; top: 0; z-index: 100; background: inherit; padding-bottom: 10px; }
+        #today-scroll-area { overflow-y: auto; flex-grow: 1; }
+
+        .today-header-container { margin-bottom: 15px; border-bottom: 1px solid rgba(128,128,128,0.3); padding-bottom: 10px; }
+        .patent-info-table { width: 100%; font-size: 12px; border-collapse: collapse; background: rgba(0,0,0,0.1); }
+        .patent-info-table td { padding: 6px 10px; border: 1px solid rgba(128,128,128,0.2); }
+        .info-label { font-weight: bold; color: #3498db; width: 40%; }
+        .input-inline-edit { background: transparent; border: none; color: inherit; width: 100%; font-size: 12px; outline: none; }
+
+        .list-table { width: 100%; border-collapse: collapse; background: white; }
+        #today-section .list-table { background: transparent; color: inherit; }
+        .list-table th, .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); text-align: left; font-size: 13px; }
+        
+        #main-list.hide-en .col-en, #main-list.hide-de .col-de, #main-list.hide-fr .col-fr, #main-list.hide-cat .col-cat { display: none !important; }
+
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-options { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px; padding: 10px; }
+        .dropdown-options label { display: block; padding: 5px; font-size: 12px; cursor: pointer; color: black; }
+
+        /* Landing Screen */
+        #landing-screen { position: absolute; inset: 0; background: var(--primary-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+        .upload-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px; }
+        .file-input-wrapper { border: 2px dashed #d1d5db; border-radius: 12px; padding: 40px 20px; margin: 20px 0; cursor: pointer; transition: all 0.2s; }
+        .file-input-wrapper:hover { border-color: var(--accent-blue); background: #f8faff; }
+        .recent-list { margin-top: 25px; text-align: left; }
+        .recent-item { padding: 12px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+    <div id="landing-screen">
+        <div class="upload-card">
+            <h1 style="margin-bottom: 10px;">EPO Glossary</h1>
+            <p style="color: #65676b; margin-bottom: 30px;">Professional Patent Translation Environment</p>
+            <div class="file-input-wrapper" onclick="document.getElementById('csv-upload').click()">
+                <div style="font-size: 40px; margin-bottom: 10px;">📄</div>
+                <strong>Click to upload Glossary CSV</strong>
+                <p style="font-size: 12px; color: #65676b; margin-top: 10px;">Standard EPO Export Format</p>
+                <input type="file" id="csv-upload" accept=".csv" class="hidden" onchange="handleUpload(event)">
+            </div>
+            <div id="history-list" class="recent-list"></div>
+        </div>
+    </div>
+
+    <div id="app-wrapper">
+        <div id="main-section">
+            <div class="header-with-logo">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="btn-ui" onclick="togglePane('history-pane')">☰</button>
+                    <h2 id="main-title" style="font-size: 16px; margin: 0; white-space: nowrap;">Glossary</h2>
+                </div>
+
+                <div class="header-center-filters">
+                    <div id="view-controls" class="hidden" style="display: flex; gap: 4px;">
+                        <button class="btn-ui" onclick="toggleView('split')">Split View</button>
+                        <button class="btn-ui" onclick="toggleView('master')">Main Only</button>
+                        <button class="btn-ui" onclick="toggleView('today')">Today Only</button>
+                    </div>
+
+                    <input type="search" id="master-search" placeholder="Search Master..." style="flex-grow: 1;">
+                    
+                    <div class="dropdown">
+                        <button class="btn-ui" onclick="toggleDrop('col-drop', event)">Columns ▾</button>
+                        <div id="col-drop" class="dropdown-options" onclick="event.stopPropagation()">
+                            <label><input type="checkbox" checked onchange="toggleCol('en')"> English</label>
+                            <label><input type="checkbox" checked onchange="toggleCol('de')"> German</label>
+                            <label><input type="checkbox" checked onchange="toggleCol('fr')"> French</label>
+                            <label><input type="checkbox" checked onchange="toggleCol('cat')"> Category</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn-ui btn-download" onclick="exportToday()">Export</button>
+                    <button class="btn-ui" onclick="togglePane('settings-pane')">⚙️</button>
+                </div>
+            </div>
+
+            <div id="main-list" style="overflow-y: auto; flex-grow: 1;">
+                <table class="list-table">
+                    <thead>
+                        <tr>
+                            <th class="col-en">English</th>
+                            <th class="col-de">German</th>
+                            <th class="col-fr">French</th>
+                            <th class="col-cat">Category</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="list"></tbody>
+                </table>
+            </div>
+
+            <div id="legal-iframe-container" class="hidden">
+                <div style="padding: 10px; background: #eee; display: flex; justify-content: flex-end;">
+                    <button class="btn-ui" onclick="closeLegal()">✕ Close Legal View</button>
+                </div>
+                <iframe id="legal-frame" style="flex:1; border:none; width:100%; height:100%;"></iframe>
+            </div>
+        </div>
+
+        <div id="today-section">
+            <div class="today-sticky-header">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 14px;">Today's Session <span id="today-count" class="badge-inline">0</span></h3>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-ui" style="background: transparent; color: inherit; border:1px solid rgba(128,128,128,0.3);" onclick="setTheme('light')">L</button>
+                        <button class="btn-ui" style="background: transparent; color: inherit; border:1px solid rgba(128,128,128,0.3);" onclick="setTheme('dark')">D</button>
+                        <button class="btn-ui" style="background: transparent; color: inherit; border:1px solid rgba(128,128,128,0.3);" onclick="setTheme('sepia')">S</button>
+                    </div>
+                </div>
+                
+                <input type="search" id="today-search" placeholder="Search session..." style="width: 100%; margin-bottom: 10px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+
+                <div id="add-term-box">
+                    <div class="add-term-grid">
+                        <div>
+                            <label>ENGLISH</label>
+                            <input type="text" id="add-en" placeholder="Term...">
+                        </div>
+                        <div>
+                            <label>GERMAN</label>
+                            <input type="text" id="add-de" placeholder="Übersetzung...">
+                        </div>
+                        <div>
+                            <label>FRENCH</label>
+                            <input type="text" id="add-fr" placeholder="Traduction...">
+                        </div>
+                    </div>
+                    <button class="btn-ui" style="width: 100%; background: var(--accent-blue); color: white; border: none;" onclick="addNewTerm()">+ Add Custom Term to Session</button>
+                </div>
+
+                <div class="today-header-container">
+                    <table class="patent-info-table">
+                        <tr><td class="info-label">Patent #</td><td><input type="text" class="input-inline-edit" placeholder="EP 1234567"></td></tr>
+                        <tr><td class="info-label">Applicant</td><td><input type="text" class="input-inline-edit" placeholder="Company Name"></td></tr>
+                        <tr><td class="info-label">Title</td><td><input type="text" class="input-inline-edit" placeholder="Method of..."></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div id="today-scroll-area">
+                <table class="list-table">
+                    <tbody id="pinned-body" style="border-bottom: 2px solid var(--accent-blue);"></tbody>
+                    <tbody id="today-body" class="list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-pane" class="side-pane">
+        <div class="pane-header"><h3>History</h3><button class="close-pane-btn" onclick="togglePane('history-pane')">×</button></div>
+        <div id="pane-history-list"></div>
+    </div>
+
+    <div id="settings-pane" class="side-pane">
+        <div class="pane-header"><h3>Settings</h3><button class="close-pane-btn" onclick="togglePane('settings-pane')">×</button></div>
+        <div style="margin-top: 20px;">
+            <p><strong>External Resources</strong></p>
+            <button class="btn-ui" style="width: 100%; margin-bottom: 10px; background:#7f8c8d; color:white;" onclick="showLegal('https://www.epo.org/en/legal/glossary', 'EPO Glossary')">EPO Glossary</button>
+            <button class="btn-ui" style="width: 100%; background:#c0392b; color:white;" onclick="showLegal('https://www.epo.org/en/legal/epc', 'EPC Articles')">EPC Legal Texts</button>
+        </div>
+    </div>
+
+    <script>
+        let masterList, todayList;
+        let masterData = [];
+
+        function handleUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            parseFile(file);
+        }
+
+        function parseFile(file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    masterData = results.data;
+                    initLists();
+                    saveToHistory(file.name, masterData);
+                    document.getElementById('landing-screen').classList.add('hidden');
+                    document.getElementById('view-controls').classList.remove('hidden');
+                }
+            });
+        }
+
+        function initLists() {
+            masterList = new List('main-list', {
+                valueNames: ['en', 'de', 'fr', 'cat'],
+                item: `<tr>
+                    <td class="en col-en"></td>
+                    <td class="de col-de"></td>
+                    <td class="fr col-fr"></td>
+                    <td class="cat col-cat"></td>
+                    <td><button class="btn-ui" onclick="addToToday(this)">+</button></td>
+                </tr>`
+            }, masterData);
+
+            todayList = new List('today-section', {
+                valueNames: ['en', 'de', 'fr'],
+                item: `<tr>
+                    <td class="en"></td>
+                    <td class="de"></td>
+                    <td class="fr"></td>
+                    <td><button class="btn-ui" onclick="togglePin(this)">📌</button></td>
+                </tr>`
+            });
+        }
+
+        function addToToday(btn) {
+            const row = btn.closest('tr');
+            const item = {
+                en: row.querySelector('.en').textContent,
+                de: row.querySelector('.de').textContent,
+                fr: row.querySelector('.fr').textContent
+            };
+            todayList.add(item);
+            updateTodayCount();
+        }
+
+        function addNewTerm() {
+            const en = document.getElementById('add-en').value;
+            const de = document.getElementById('add-de').value;
+            const fr = document.getElementById('add-fr').value;
+            if(!en && !de && !fr) return;
+            todayList.add({en, de, fr});
+            document.getElementById('add-en').value = '';
+            document.getElementById('add-de').value = '';
+            document.getElementById('add-fr').value = '';
+            updateTodayCount();
+        }
+
+        function togglePin(btn) {
+            const row = btn.closest('tr');
+            const pinnedBody = document.getElementById('pinned-body');
+            const todayBody = document.getElementById('today-body');
+            if (row.parentElement.id === 'pinned-body') {
+                todayBody.appendChild(row);
+                btn.style.opacity = "0.5";
+            } else {
+                pinnedBody.appendChild(row);
+                btn.style.opacity = "1";
+            }
+        }
+
+        function updateTodayCount() {
+            document.getElementById('today-count').textContent = todayList.items.length;
+        }
+
+        function togglePane(id) {
+            document.querySelectorAll('.side-pane').forEach(p => {
+                if(p.id === id) p.classList.toggle('active');
+                else p.classList.remove('active');
+            });
+        }
+
+        function toggleCol(col) {
+            document.getElementById('main-list').classList.toggle('hide-' + col);
+        }
+
+        function toggleView(mode) {
+            const m = document.getElementById('main-section');
+            const t = document.getElementById('today-section');
+            m.classList.remove('hidden', 'full-width');
+            t.classList.remove('hidden', 'full-width');
+            if(mode === 'master') { t.classList.add('hidden'); m.classList.add('full-width'); }
+            if(mode === 'today') { m.classList.add('hidden'); t.classList.add('full-width'); }
+        }
+
+        function showLegal(url, title) {
+            document.getElementById('main-list').classList.add('hidden');
+            document.getElementById('legal-iframe-container').classList.remove('hidden');
+            document.getElementById('legal-frame').src = url;
+            document.getElementById('main-title').textContent = title;
+        }
+
+        function closeLegal() {
+            document.getElementById('legal-iframe-container').classList.add('hidden');
+            document.getElementById('main-list').classList.remove('hidden');
+            document.getElementById('main-title').textContent = 'Glossary';
+        }
+
+        function setTheme(t) {
+            document.getElementById('today-section').className = 'theme-' + t;
+        }
+
+        function toggleDrop(id, e) {
+            e.stopPropagation();
+            const el = document.getElementById(id);
+            const isVis = el.style.display === 'block';
+            document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+            el.style.display = isVis ? 'none' : 'block';
+        }
+
+        function saveToHistory(name, data) {
+            let hist = JSON.parse(localStorage.getItem('epo_hist') || '[]');
+            hist = hist.filter(h => h.name !== name);
+            hist.unshift({name, data, date: new Date().toLocaleDateString()});
+            localStorage.setItem('epo_hist', JSON.stringify(hist.slice(0, 5)));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const hist = JSON.parse(localStorage.getItem('epo_hist') || '[]');
+            const container = document.getElementById('history-list');
+            const paneContainer = document.getElementById('pane-history-list');
+            const html = hist.map(h => `
+                <div class="recent-item" onclick='loadFromHistory(${JSON.stringify(h.data)})'>
+                    <span>${h.name}</span>
+                    <small>${h.date}</small>
+                </div>
+            `).join('');
+            container.innerHTML = html;
+            paneContainer.innerHTML = html;
+        }
+
+        function loadFromHistory(data) {
+            masterData = data;
+            initLists();
+            document.getElementById('landing-screen').classList.add('hidden');
+            document.getElementById('view-controls').classList.remove('hidden');
+        }
+
+        function exportToday() {
+            const rows = Array.from(document.querySelectorAll('#today-section tbody tr'));
+            const csvData = rows.map(r => ({
+                English: r.querySelector('.en').textContent,
+                German: r.querySelector('.de').textContent,
+                French: r.querySelector('.fr').textContent
+            }));
+            const csv = Papa.unparse(csvData);
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `EPO_Session_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+
+        window.onload = loadHistory;
+        document.onclick = () => document.querySelectorAll('.dropdown-options').forEach(d => d.style.display = 'none');
+        
+        document.getElementById('master-search').oninput = (e) => masterList.search(e.target.value, ['en', 'de', 'fr']);
+        document.getElementById('today-search').oninput = (e) => todayList.search(e.target.value);
+    </script>
+</body>
+</html>
