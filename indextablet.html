@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EPO Interpreter Dashboard - Tablet Optimized</title>
+    <style>
+        /* BASE RESET */
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, sans-serif; }
+
+        /* TABLET OPTIMIZATION LOGIC */
+        #desktop-version { display: block; }
+        #mobile-version { display: none; }
+
+        /* Breakpoint for Tablets (iPad) */
+        @media only screen and (max-width: 1024px) {
+            #desktop-version { display: none; }
+            #mobile-version { display: block; }
+        }
+
+        /* IFRAME CONTAINERS TO PREVENT CODE CONFLICTS */
+        iframe { width: 100vw; height: 100vh; border: none; }
+
+        /* STYLES FOR OVERRIDING VIEW BUTTONS */
+        .tablet-pane-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .view-btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 1px solid #0066cc;
+            background: white;
+            color: #0066cc;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .view-btn.active {
+            background: #0066cc;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tablet-pane-controls" id="tablet-view-switcher">
+        <button class="view-btn active" onclick="switchView('main')">Main Only</button>
+        <button class="view-btn" onclick="switchView('today')">Today Only</button>
+    </div>
+
+    <div id="desktop-version">
+        <iframe id="desktop-frame" srcdoc='
+            [PASTE ENTIRE CONTENT OF "indextoday55 desktop.html" HERE]
+        '></iframe>
+    </div>
+
+    <div id="mobile-version">
+        <iframe id="mobile-frame" srcdoc='
+            [PASTE ENTIRE CONTENT OF "indextoday59 mobile.html" HERE]
+        '></iframe>
+    </div>
+
+    <script>
+        // Logic to communicate with the internal code to switch views
+        function switchView(viewType) {
+            const mobileFrame = document.getElementById("mobile-frame").contentWindow;
+            const desktopFrame = document.getElementById("desktop-frame").contentWindow;
+            
+            // Update UI buttons
+            document.querySelectorAll(".view-btn").forEach(btn => btn.classList.remove("active"));
+            event.target.classList.add("active");
+
+            if (viewType === "main") {
+                // Call your existing internal function "toggleView" or manipulate CSS via iframe
+                mobileFrame.document.getElementById("main-section").classList.remove("hidden");
+                mobileFrame.document.getElementById("today-section").classList.add("hidden");
+                mobileFrame.document.getElementById("main-section").classList.add("full-width");
+            } else if (viewType === "today") {
+                mobileFrame.document.getElementById("main-section").classList.add("hidden");
+                mobileFrame.document.getElementById("today-section").classList.remove("hidden");
+                mobileFrame.document.getElementById("today-section").classList.add("full-width");
+            }
+        }
+
+        // Auto-hide the switcher on desktop
+        window.addEventListener("resize", () => {
+            const switcher = document.getElementById("tablet-view-switcher");
+            if (window.innerWidth > 1024) {
+                switcher.style.display = "none";
+            } else {
+                switcher.style.display = "flex";
+            }
+        });
+    </script>
+</body>
+</html>
