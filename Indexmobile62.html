@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EPO Interpreter Dashboard</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --today-bg: #2d3436;
+            --today-text: #dfe6e9;
+            --border-color: #e4e6eb;
+            --accent-blue: #0066cc;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --text-main: #1c1e21;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--primary-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; position: relative; }
+        #main-section { flex: 2; padding: 15px; overflow: hidden; background: var(--primary-bg); border-right: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; min-width: 0; }
+        #today-section { flex: 1.2; padding: 15px; overflow: hidden; background: var(--today-bg); color: var(--today-text); display: flex; flex-direction: column; transition: all 0.3s ease; }
+
+        #today-section.theme-light { background: #ffffff !important; color: #1c1e21 !important; }
+        #today-section.theme-dark { background: #2d3436 !important; color: #dfe6e9 !important; }
+        #today-section.theme-sepia { background: #f4ecd8 !important; color: #5b4636 !important; }
+
+        .hidden { display: none !important; }
+
+        /* Responsive Column Logic */
+        .full-width #today-body, .full-width #pinned-body { display: table-row-group; columns: 1; }
+        .full-width #today-body tr, .full-width #pinned-body tr { display: table-row; width: 100%; }
+
+        @media only screen and (orientation: landscape) {
+            .full-width #today-body, .full-width #pinned-body { display: block; columns: 2; column-gap: 30px; column-rule: 2px solid rgba(128,128,128,0.5); }
+            .full-width #today-body tr, .full-width #pinned-body tr { display: flex; width: 100%; break-inside: avoid; border-bottom: 1px solid rgba(128,128,128,0.2); box-sizing: border-box; }
+            .full-width #today-body td, .full-width #pinned-body td { flex: 1; padding: 10px 5px; min-width: 0; word-break: break-word; }
+        }
+
+        .side-pane { position: absolute; left: 0; top: 0; bottom: 0; width: 380px; background: white; z-index: 2000; box-shadow: 5px 0 15px rgba(0,0,0,0.15); transform: translateX(-100%); transition: transform 0.3s ease-in-out; padding: 25px; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); color: var(--text-main); }
+        .side-pane.active { transform: translateX(0); }
+        .pane-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .close-pane-btn { background: #f3f4f6; border: none; font-size: 24px; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+
+        .header-with-logo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; gap: 8px; flex-shrink: 0; min-width: 0; }
+        .header-center-filters { display: flex; flex-grow: 1; gap: 6px; align-items: center; min-width: 0; }
+        
+        input[type="search"], .input-today-header { height: 40px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; min-width: 0; }
+        
+        .btn-ui { height: 40px; padding: 0 8px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; color: #1c1e21; font-weight: 500; }
+        .btn-download { background: var(--accent-green) !important; color: white !important; border: none !important; }
+
+        #today-list-container { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
+        .today-sticky-header { position: sticky; top: 0; z-index: 100; background: inherit; padding-bottom: 10px; }
+        #today-scroll-area { overflow-y: auto; flex-grow: 1; }
+
+        .patent-info-table { width: 100%; font-size: 12px; border-collapse: collapse; background: rgba(0,0,0,0.1); }
+        .patent-info-table td { padding: 6px 10px; border: 1px solid rgba(128,128,128,0.2); }
+        .info-label { font-weight: bold; color: #3498db; width: 40%; }
+
+        .list-table { width: 100%; border-collapse: collapse; background: white; }
+        #today-section .list-table { background: transparent; color: inherit; }
+        .list-table th, .list-table td { padding: 12px; border-bottom: 1px solid rgba(128,128,128,0.1); text-align: left; font-size: 13px; }
+
+        /* Updated View Bar and Tab CSS */
+        .pane-controls { position: fixed; bottom: 20px; left: 20px; z-index: 3000; display: flex; gap: 10px; background: rgba(255,255,255,0.95); padding: 10px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid var(--border-color); align-items: center; transition: transform 0.3s ease; }
+        .pane-controls.minimized { transform: translateX(calc(-100% - 20px)); }
+        
+        .control-tab { position: absolute; right: -35px; top: 50%; transform: translateY(-50%); width: 35px; height: 50px; background: rgba(255,255,255,0.95); border: 1px solid var(--border-color); border-left: none; border-radius: 0 8px 8px 0; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 4px 0 10px rgba(0,0,0,0.1); font-size: 18px; color: var(--accent-blue); }
+
+        .toggle-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; font-size: 11px; font-weight: 700; transition: all 0.2s; background: white; }
+        .btn-gl { background: #7f8c8d !important; color: white !important; }
+        .btn-epc { background: #c0392b !important; color: white !important; }
+
+        #drop-area { border: 2px dashed rgba(128,128,128,0.5); padding: 20px; text-align: center; cursor: pointer; border-radius: 8px; }
+
+        @media only screen and (max-width: 768px) {
+            #btn-split-view, #btn-gl, #btn-cl, #btn-epc, .pane-controls span { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="details-pane" class="side-pane">
+        <div class="pane-header"><h2 id="det-en" style="color:var(--accent-blue); margin:0;">Term</h2><button class="close-pane-btn" onclick="togglePane('details-pane', false)">&times;</button></div>
+        <div id="details-content">
+            <div style="margin-bottom:20px;"><h4>Definition</h4><p id="det-def" style="font-style: italic; color: #555;">-</p></div>
+        </div>
+    </div>
+
+    <div id="upload-screen" style="max-width: 450px; margin: 10vh auto; padding: 40px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <h1 style="margin-bottom:30px;">Glossary Pro</h1>
+        <div style="position:relative; margin-bottom: 20px;">
+            <button class="btn-ui" style="width:100%; background: var(--accent-blue); color:white; height:50px; font-size:14px;">Load Master CSV</button>
+            <input type="file" id="master-file-input" accept=".csv" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+        </div>
+    </div>
+
+    <div id="app-wrapper" class="hidden">
+        <section id="main-section">
+            <div class="header-with-logo">
+                <h2 id="main-title" style="margin:0; font-size:18px;">Glossary</h2>
+                <div class="header-center-filters">
+                    <input type="search" id="master-search" placeholder="Search Master...">
+                    <button class="btn-ui btn-download" onclick="downloadMaster()">📥 Save</button> 
+                </div> 
+            </div> 
+            <div id="main-scroll-area" style="flex-grow:1; overflow-y:auto;"> 
+                <table class="list-table"> 
+                    <thead><tr><th>English</th><th>German</th><th>French</th></tr></thead> 
+                    <tbody class="list"></tbody> 
+                </table> 
+            </div> 
+        </section> 
+        
+        <section id="today-section" class="theme-dark"> 
+            <div id="patent-info-wrapper" class="hidden"> 
+                <div style="display:flex; gap:5px; margin-bottom:10px;"> 
+                    <select id="header-select" style="height:30px; font-size:11px; flex:1; background:rgba(0,0,0,0.3); color:inherit; border:1px solid #666; border-radius:4px;"></select> 
+                    <button onclick="addMetaRow()" class="btn-ui" style="height:30px; width:30px; padding:0; background:rgba(255,255,255,0.1); color:inherit;">+</button> 
+                </div> 
+                <div id="patent-table-content" style="margin-bottom:15px; border-bottom:1px solid rgba(128,128,128,0.3); padding-bottom:10px;"> 
+                    <table class="patent-info-table" id="meta-table-body"></table> 
+                </div> 
+            </div> 
+
+            <div id="drop-area">Drop Case CSV</div> 
+            
+            <div id="today-list-container" class="hidden"> 
+                <div class="today-sticky-header"> 
+                    <div style="display:flex; gap:8px; margin-bottom:10px;"> 
+                        <input type="search" id="today-search" style="flex:1; padding:10px; border-radius:6px; background:rgba(255,255,255,0.1); color:inherit; border:1px solid rgba(128,128,128,0.3);" placeholder="Filter terms..."> 
+                        <button onclick="downloadToday()" class="btn-ui btn-download">📥 Export</button> 
+                    </div> 
+                    <div id="today-pinned-area" class="hidden"><table class="list-table"><tbody id="pinned-body"></tbody></table></div> 
+                </div> 
+                <div id="today-scroll-area"> 
+                    <table class="list-table"> <tbody id="today-body" class="list"></tbody> </table> 
+                </div> 
+            </div> 
+            
+            <div style="margin-top:auto; padding-top:12px; border-top:1px solid rgba(128,128,128,0.2); display:flex; justify-content:space-between; align-items:center;"> 
+                <div style="font-size:12px; opacity:0.8;">💡 Click to pin</div> 
+                <div style="display:flex; gap:12px; align-items:center;"> 
+                    <button onclick="setTheme('light')" style="width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #999; cursor:pointer;"></button> 
+                    <button onclick="setTheme('dark')" style="width:20px; height:20px; border-radius:50%; background:#2d3436; border:1px solid #999; cursor:pointer;"></button> 
+                </div> 
+            </div> 
+        </section> 
+    </div>
+
+    <div id="control-bar" class="pane-controls hidden">
+        <div class="control-tab" onclick="toggleControlBar()">☰</div>
+        <button id="patent-toggle-btn" class="toggle-btn" onclick="togglePatentInfo()">Patent Info <span id="patent-chevron">▴</span></button>
+        <button class="toggle-btn" onclick="setLayout('master')">Main Only</button>
+        <button class="toggle-btn" onclick="setLayout('today')">Today Only</button>
+        <span style="color:#666; margin: 0 5px;">|</span>
+        <button id="btn-gl" class="toggle-btn btn-gl" onclick="alert('Guidelines Loading...')">GL</button>
+        <button id="btn-epc" class="toggle-btn btn-epc" onclick="alert('EPC Loading...')">EPC</button>
+    </div>
+
+    <script>
+        let masterList, todayList, pinnedItems = [];
+
+        function togglePane(id, show) { document.getElementById(id).classList.toggle('active', show); }
+
+        function toggleControlBar() {
+            document.getElementById('control-bar').classList.toggle('minimized');
+        }
+
+        function togglePatentInfo() {
+            const wrapper = document.getElementById('patent-info-wrapper');
+            const chevron = document.getElementById('patent-chevron');
+            const isHidden = wrapper.classList.toggle('hidden');
+            chevron.textContent = isHidden ? '▴' : '▾';
+        }
+
+        document.getElementById('master-file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            Papa.parse(file, { header: true, skipEmptyLines: true, complete: (r) => {
+                const clean = r.data.map(row => ({ en: row.EN||'', de: row.DE||'', fr: row.FR||'' }));
+                launchApp(clean);
+            }});
+        };
+
+        function launchApp(data) {
+            document.getElementById('upload-screen').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            document.getElementById('control-bar').classList.remove('hidden');
+            masterList = new List('main-section', { 
+                valueNames: ['en', 'de', 'fr'], 
+                item: `<tr><td class="en"></td><td class="de"></td><td class="fr"></td></tr>` 
+            }, data);
+        }
+
+        const dropArea = document.getElementById('drop-area');
+        dropArea.onclick = () => { let i = document.createElement('input'); i.type='file'; i.onchange=(e)=>handleToday(e.target.files[0]); i.click(); };
+
+        function handleToday(file) {
+            Papa.parse(file, { header: true, skipEmptyLines: true, complete: (r) => {
+                document.getElementById('drop-area').classList.add('hidden');
+                document.getElementById('today-list-container').classList.remove('hidden');
+                todayList = new List('today-section', { 
+                    valueNames: ['en', 'de', 'fr'], 
+                    item: `<tr><td class="en"></td><td class="de"></td><td class="fr"></td></tr>` 
+                }, r.data);
+            }});
+        }
+
+        function setLayout(mode) {
+            const m = document.getElementById('main-section'), t = document.getElementById('today-section');
+            m.classList.remove('hidden', 'full-width'); t.classList.remove('hidden', 'full-width');
+            if(mode === 'master') { t.classList.add('hidden'); m.classList.add('full-width'); }
+            if(mode === 'today') { m.classList.add('hidden'); t.classList.add('full-width'); }
+        }
+
+        function setTheme(t) { document.getElementById('today-section').className = 'theme-' + t; }
+        function downloadMaster() { /* Logic for CSV export */ alert('Saving...'); }
+        function downloadToday() { /* Logic for CSV export */ alert('Exporting...'); }
+
+        window.onload = () => {
+            // Mocking initial patent info table
+            const table = document.getElementById('meta-table-body');
+            table.innerHTML = `<tr><td class="info-label">Patent No</td><td><input style="background:transparent;border:none;color:inherit;width:100%" placeholder="..."></td></tr>`;
+        };
+    </script>
+</body>
+</html>
